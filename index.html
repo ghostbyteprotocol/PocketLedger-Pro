@@ -10,115 +10,170 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
     :root {
-      --bg: #050507;
-      --surface: #111216;
-      --surface-2: #181a20;
+      --bg: #050a0e;
+      --surface: #0d171e;
+      --surface-2: #14232d;
       --border: rgba(255, 255, 255, 0.08);
       --primary: #10b981;
-      --primary-glow: rgba(16, 185, 129, 0.25);
+      --primary-glow: rgba(16, 185, 129, 0.28);
+      --cyan: #06b6d4;
       --amber: #f59e0b;
-      --danger: #f43f5e;
-      --cyan: #38bdf8;
-      --purple: #a855f7;
-      --text: #f4f4f5;
-      --muted: #8e929f;
+      --rose: #f43f5e;
+      --text: #f1f5f9;
+      --muted: #8ca0b3;
     }
 
-    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
     body {
       background: var(--bg);
-      background-image: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.1), transparent 45%);
+      background-image:
+        radial-gradient(circle at 15% 0%, rgba(16, 185, 129, 0.14), transparent 45%),
+        radial-gradient(circle at 85% 5%, rgba(6, 182, 212, 0.12), transparent 45%);
       color: var(--text);
-      padding: 14px 14px 90px;
+      padding: 14px 14px 92px;
       min-height: 100vh;
     }
     .container { max-width: 820px; margin: 0 auto; }
 
+    /* ================= SECRET CALCULATOR OVERLAY ================= */
+    #calcLockScreen {
+      position: fixed; inset: 0; z-index: 99999;
+      background: #06090d;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 20px 18px 28px;
+    }
+    #calcLockScreen.unlocked { display: none; }
+    .calc-header {
+      position: absolute; top: 18px; left: 20px; right: 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      color: #64748b; font-size: 13px; font-weight: 600;
+    }
+    .calc-display-box {
+      text-align: right; padding: 16px 10px 24px;
+      word-break: break-all;
+    }
+    .calc-history { font-size: 15px; color: #64748b; min-height: 22px; margin-bottom: 6px; }
+    .calc-screen {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 48px; font-weight: 700; color: #f8fafc;
+      line-height: 1.1;
+    }
+    .calc-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      max-width: 440px; width: 100%; margin: 0 auto;
+    }
+    .c-btn {
+      height: 66px; border-radius: 20px; border: none;
+      font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 600;
+      background: #111822; color: #f1f5f9; cursor: pointer;
+      transition: transform 0.08s, background 0.15s;
+    }
+    .c-btn:active { transform: scale(0.94); background: #1e293b; }
+    .c-btn.op { background: #162230; color: #38bdf8; }
+    .c-btn.fn { background: #1a1f29; color: #f43f5e; }
+    .c-btn.eq { background: linear-gradient(135deg, #10b981, #059669); color: #050a0e; font-weight: 700; }
+
+    /* ================= STEALTH EYE BLUR MODE ================= */
+    body.stealth-blur .blur-sensitive {
+      filter: blur(8px);
+      user-select: none;
+      pointer-events: none;
+      transition: filter 0.2s ease;
+    }
+
     /* Top App Bar */
     .topbar {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 16px; background: rgba(17, 18, 22, 0.85);
-      backdrop-filter: blur(12px); border: 1px solid var(--border);
-      border-radius: 18px; margin-bottom: 16px; position: sticky; top: 10px; z-index: 50;
+      padding: 12px 14px; background: rgba(13, 23, 30, 0.9);
+      backdrop-filter: blur(14px); border: 1px solid var(--border);
+      border-radius: 20px; margin-bottom: 16px; position: sticky; top: 10px; z-index: 50;
     }
     .brand { display: flex; align-items: center; gap: 10px; }
     .logo-box {
-      width: 36px; height: 36px; border-radius: 11px;
-      background: linear-gradient(135deg, #10b981, #059669);
+      width: 38px; height: 38px; border-radius: 12px;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
       display: flex; align-items: center; justify-content: center;
-      font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: #050507;
-      box-shadow: 0 4px 14px var(--primary-glow);
+      font-size: 18px; color: #050a0e; font-weight: 800;
+      box-shadow: 0 4px 16px var(--primary-glow);
     }
-    .app-name { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+    .app-name { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
     .app-sub { font-size: 10px; color: var(--muted); }
-    .status-chip {
-      display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;
-      padding: 5px 11px; border-radius: 99px; background: rgba(16, 185, 129, 0.12);
-      color: var(--primary); border: 1px solid rgba(16, 185, 129, 0.25);
+    .top-actions { display: flex; align-items: center; gap: 7px; }
+    .icon-pill {
+      background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border);
+      color: var(--text); width: 34px; height: 34px; border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; cursor: pointer;
     }
-    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); animation: pulse 1.6s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .icon-pill.active-eye { background: rgba(244, 63, 94, 0.2); border-color: rgba(244, 63, 94, 0.45); color: var(--rose); }
 
     /* Tab Sections */
     .tab-view { display: none; animation: fadeIn 0.25s ease; }
     .tab-view.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Hero Card */
+    /* Hero Banner */
     .hero {
-      background: linear-gradient(145deg, #141820, #0c0d11);
-      border: 1px solid var(--border); border-radius: 22px; padding: 18px;
+      background: linear-gradient(135deg, #102029 0%, #0a131a 100%);
+      border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 24px; padding: 20px;
       margin-bottom: 14px;
     }
-    .hero-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }
-    .lbl-sm { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); font-weight: 700; }
-    .big-num { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: #fff; margin-top: 2px; }
+    .hero-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; }
+    .lbl-sm { font-size: 10px; text-transform: uppercase; letter-spacing: 0.9px; color: var(--muted); font-weight: 700; }
+    .big-num { font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 700; color: #fff; margin-top: 2px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .kpi-box {
       background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border);
-      border-radius: 13px; padding: 10px;
+      border-radius: 14px; padding: 10px;
     }
     .kpi-box span { display: block; font-size: 10px; color: var(--muted); font-weight: 600; }
-    .kpi-box strong { font-family: 'Space Grotesk', sans-serif; font-size: 14px; margin-top: 3px; display: block; }
+    .kpi-box strong { font-family: 'Space Grotesk', sans-serif; font-size: 15px; margin-top: 3px; display: block; }
 
     /* Cards & Forms */
     .card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 22px; padding: 18px; margin-bottom: 14px;
+      border-radius: 24px; padding: 18px; margin-bottom: 14px;
     }
     .card-title {
-      font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700;
-      margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;
+      font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700;
+      margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
     }
 
-    /* Quick Preset Chips */
-    .presets { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: none; }
+    .sync-banner {
+      display: none; align-items: center; justify-content: space-between;
+      background: rgba(16, 185, 129, 0.14); border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #a7f3d0; padding: 8px 12px; border-radius: 12px;
+      font-size: 11px; font-weight: 600; margin-bottom: 12px;
+    }
+    .sync-banner.show { display: flex; }
+
+    .presets { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: none; }
     .presets::-webkit-scrollbar { display: none; }
     .preset-chip {
-      background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
-      padding: 6px 11px; border-radius: 99px; font-size: 11px; font-weight: 600;
-      white-space: nowrap; cursor: pointer; transition: 0.15s;
+      background: var(--surface-2); border: 1px solid rgba(16, 185, 129, 0.25); color: var(--text);
+      padding: 7px 12px; border-radius: 99px; font-size: 11px; font-weight: 600;
+      white-space: nowrap; cursor: pointer;
     }
-    .preset-chip:active { background: var(--primary); color: #050507; border-color: var(--primary); }
+    .preset-chip:active { background: var(--primary); color: #050a0e; }
 
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .field { margin-bottom: 11px; }
     label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
     input {
-      width: 100%; padding: 12px 13px; border-radius: 12px;
+      width: 100%; padding: 12px 13px; border-radius: 13px;
       border: 1px solid var(--border); background: var(--surface-2);
       color: var(--text); font-size: 14px; outline: none; transition: 0.2s;
     }
-    input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
-    input::placeholder { color: #525663; }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18); }
+    input::placeholder { color: #54697a; }
 
     .other-row { display: flex; gap: 8px; margin-bottom: 8px; }
     .btn-ghost {
       background: rgba(255, 255, 255, 0.05); color: var(--text); border: 1px solid var(--border);
-      padding: 8px 13px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+      padding: 8px 13px; border-radius: 11px; font-size: 12px; font-weight: 600; cursor: pointer;
     }
     .btn-del-item {
-      background: rgba(244, 63, 94, 0.15); color: var(--danger); border: 1px solid rgba(244, 63, 94, 0.3);
+      background: rgba(244, 63, 94, 0.15); color: var(--rose); border: 1px solid rgba(244, 63, 94, 0.3);
       padding: 0 13px; border-radius: 12px; font-weight: 700; cursor: pointer;
     }
 
@@ -127,20 +182,22 @@
       margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
     }
     .btn-primary {
-      background: linear-gradient(135deg, #10b981, #059669); color: #050507;
+      background: linear-gradient(135deg, #10b981, #059669); color: #050a0e;
       border: none; padding: 13px 22px; border-radius: 14px; font-size: 14px;
-      font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px var(--primary-glow);
+      font-weight: 800; cursor: pointer; box-shadow: 0 4px 18px var(--primary-glow);
+    }
+    .btn-primary.update-mode {
+      background: linear-gradient(135deg, #06b6d4, #0284c7);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(6, 182, 212, 0.35);
     }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Budget Progress */
-    .budget-bar-bg { height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin: 10px 0; }
-    .budget-bar-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.4s ease; border-radius: 99px; }
+    .budget-bar-bg { height: 11px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin: 10px 0; }
+    .budget-bar-fill { height: 100%; background: linear-gradient(90deg, #06b6d4, #10b981); width: 0%; transition: 0.4s ease; border-radius: 99px; }
 
-    /* Chart Container */
     .chart-box { position: relative; height: 220px; width: 100%; margin-top: 10px; }
 
-    /* Ledger & Filters */
     .filter-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 12px; }
     .week-nav {
       display: flex; justify-content: space-between; align-items: center;
@@ -148,53 +205,53 @@
       border: 1px solid var(--border); margin-bottom: 12px;
     }
     .nav-pill {
-      background: rgba(255, 255, 255, 0.06); color: var(--text); border: none;
-      padding: 7px 12px; border-radius: 9px; font-size: 12px; font-weight: 600; cursor: pointer;
+      background: rgba(255, 255, 255, 0.07); color: var(--text); border: none;
+      padding: 7px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;
     }
     .back-pill {
-      background: rgba(245, 158, 11, 0.15); color: var(--amber);
-      border: 1px solid rgba(245, 158, 11, 0.35); padding: 5px 10px; border-radius: 9px;
+      background: rgba(16, 185, 129, 0.2); color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4); padding: 5px 10px; border-radius: 9px;
       font-size: 11px; font-weight: 700; cursor: pointer;
     }
 
-    .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); }
+    .table-wrap { overflow-x: auto; border-radius: 15px; border: 1px solid var(--border); }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
     th { background: var(--surface-2); color: var(--muted); font-weight: 600; padding: 11px 10px; white-space: nowrap; }
     td { padding: 11px 10px; border-top: 1px solid var(--border); white-space: nowrap; }
     .date-tag { background: rgba(255,255,255,0.06); padding: 4px 8px; border-radius: 7px; font-weight: 600; font-size: 11px; }
-    .amt-tag { background: rgba(16, 185, 129, 0.15); color: var(--primary); padding: 4px 8px; border-radius: 7px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; }
+    .amt-tag { background: rgba(16, 185, 129, 0.16); color: var(--primary); padding: 4px 8px; border-radius: 7px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; }
     .act-btn { border: none; padding: 6px 8px; border-radius: 8px; font-size: 12px; cursor: pointer; margin-right: 3px; }
 
     .action-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 8px; }
     .btn-wa {
       background: rgba(16, 185, 129, 0.15); color: var(--primary);
-      border: 1px solid rgba(16, 185, 129, 0.3); padding: 9px 14px; border-radius: 11px; font-size: 12px; font-weight: 700; cursor: pointer;
+      border: 1px solid rgba(16, 185, 129, 0.3); padding: 9px 14px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer;
     }
     .btn-pdf {
-      background: rgba(56, 189, 248, 0.15); color: var(--cyan);
-      border: 1px solid rgba(56, 189, 248, 0.3); padding: 9px 14px; border-radius: 11px; font-size: 12px; font-weight: 700; cursor: pointer;
+      background: rgba(6, 182, 212, 0.15); color: var(--cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3); padding: 9px 14px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer;
     }
     .btn-del-wk {
-      background: rgba(244, 63, 94, 0.12); color: var(--danger);
-      border: 1px solid rgba(244, 63, 94, 0.25); padding: 9px 12px; border-radius: 11px; font-size: 12px; font-weight: 600; cursor: pointer;
+      background: rgba(244, 63, 94, 0.14); color: var(--rose);
+      border: 1px solid rgba(244, 63, 94, 0.28); padding: 9px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer;
     }
 
     /* Bottom Navigation Bar */
     .bottom-nav {
       position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
       width: calc(100% - 28px); max-width: 460px;
-      background: rgba(24, 26, 32, 0.92); backdrop-filter: blur(16px);
-      border: 1px solid var(--border); border-radius: 20px;
+      background: rgba(20, 35, 45, 0.94); backdrop-filter: blur(18px);
+      border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 22px;
       display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75); z-index: 100;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8); z-index: 100;
     }
     .nav-tab {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 8px 4px; border-radius: 14px; color: var(--muted);
+      padding: 8px 4px; border-radius: 15px; color: var(--muted);
       font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; border: none; background: transparent;
     }
     .nav-tab span.ic { font-size: 17px; margin-bottom: 2px; }
-    .nav-tab.active { background: rgba(16, 185, 129, 0.16); color: var(--primary); }
+    .nav-tab.active { background: rgba(16, 185, 129, 0.18); color: var(--primary); }
 
     /* Edit Modal */
     .modal-overlay {
@@ -206,10 +263,9 @@
       max-width: 440px; border-radius: 24px; padding: 22px; max-height: 90vh; overflow-y: auto;
     }
 
-    /* Toast */
     #toast {
       position: fixed; top: 72px; left: 50%; transform: translateX(-50%);
-      background: var(--primary); color: #050507; padding: 9px 18px; border-radius: 99px;
+      background: var(--primary); color: #050a0e; padding: 9px 18px; border-radius: 99px;
       font-weight: 700; font-size: 12px; display: none; z-index: 10000; box-shadow: 0 10px 25px rgba(0,0,0,0.6);
     }
 
@@ -220,17 +276,59 @@
 </head>
 <body>
 
+<!-- SECRET CALCULATOR DISGUISE LOCK SCREEN -->
+<div id="calcLockScreen">
+  <div class="calc-header">
+    <span>Calculator</span>
+    <span>DEG</span>
+  </div>
+  <div class="calc-display-box">
+    <div class="calc-history" id="calcHistory"></div>
+    <div class="calc-screen" id="calcScreen">0</div>
+  </div>
+  <div class="calc-grid">
+    <button class="c-btn fn" onclick="calcClear()">C</button>
+    <button class="c-btn op" onclick="calcBack()">⌫</button>
+    <button class="c-btn op" onclick="calcAppend('%')">%</button>
+    <button class="c-btn op" onclick="calcAppend('/')">÷</button>
+
+    <button class="c-btn" onclick="calcAppend('7')">7</button>
+    <button class="c-btn" onclick="calcAppend('8')">8</button>
+    <button class="c-btn" onclick="calcAppend('9')">9</button>
+    <button class="c-btn op" onclick="calcAppend('*')">×</button>
+
+    <button class="c-btn" onclick="calcAppend('4')">4</button>
+    <button class="c-btn" onclick="calcAppend('5')">5</button>
+    <button class="c-btn" onclick="calcAppend('6')">6</button>
+    <button class="c-btn op" onclick="calcAppend('-')">−</button>
+
+    <button class="c-btn" onclick="calcAppend('1')">1</button>
+    <button class="c-btn" onclick="calcAppend('2')">2</button>
+    <button class="c-btn" onclick="calcAppend('3')">3</button>
+    <button class="c-btn op" onclick="calcAppend('+')">+</button>
+
+    <button class="c-btn" onclick="calcAppend('00')">00</button>
+    <button class="c-btn" onclick="calcAppend('0')">0</button>
+    <button class="c-btn" onclick="calcAppend('.')">.</button>
+    <button class="c-btn eq" onclick="calcEquals()">=</button>
+  </div>
+</div>
+
 <div class="container">
   <!-- Sticky Top App Bar -->
   <div class="topbar">
     <div class="brand">
-      <div class="logo-box">₹</div>
+      <div class="logo-box">💼</div>
       <div>
         <div class="app-name">PocketLedger Pro</div>
-        <div class="app-sub">Smart Mess & Expense Log</div>
+        <div class="app-sub">Private Personal Vault</div>
       </div>
     </div>
-    <div class="status-chip"><span class="dot"></span> Synced</div>
+    <div class="top-actions">
+      <button class="icon-pill" id="eyeToggleBtn" title="Toggle Blur Privacy" onclick="toggleStealthBlur()">👁️</button>
+      <button class="icon-pill" title="Change Calculator PIN" onclick="changeSecretPin()">🔑</button>
+      <button class="icon-pill" title="Lock to Calculator" onclick="lockVault()">🔒</button>
+    </div>
   </div>
 
   <!-- TAB 1: ENTRY & DASHBOARD -->
@@ -239,67 +337,73 @@
       <div class="hero-row">
         <div>
           <div class="lbl-sm">Active Week Spend</div>
-          <div class="big-num" id="statTotal">₹0</div>
+          <div class="big-num blur-sensitive" id="statTotal">₹0</div>
         </div>
         <div style="text-align:right;">
           <div class="lbl-sm">Daily Avg</div>
-          <div style="font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700; color:var(--primary);" id="statAvg">₹0</div>
+          <div class="blur-sensitive" style="font-family:'Space Grotesk',sans-serif; font-size:21px; font-weight:700; color:var(--primary);" id="statAvg">₹0</div>
         </div>
       </div>
       <div class="kpi-grid">
         <div class="kpi-box">
           <span>Logged Days</span>
-          <strong id="statEntries" style="color:var(--amber);">0 Days</strong>
+          <strong id="statEntries" style="color:var(--cyan);">0 Days</strong>
         </div>
         <div class="kpi-box">
           <span>Highest Day</span>
-          <strong id="statMax" style="color:var(--danger);">₹0</strong>
+          <strong class="blur-sensitive" id="statMax" style="color:var(--rose);">₹0</strong>
         </div>
         <div class="kpi-box">
           <span>Month Spend</span>
-          <strong id="statMonth" style="color:var(--cyan);">₹0</strong>
+          <strong class="blur-sensitive" id="statMonth" style="color:var(--amber);">₹0</strong>
         </div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title">
-        <span>⚡ Quick Expense Entry</span>
+        <span>⚡ Quick Personal Entry</span>
         <span style="font-size:11px; color:var(--primary); font-weight:500;">Number + Space = ( )</span>
+      </div>
+
+      <!-- Existing Date Sync Indicator -->
+      <div id="existingSyncBanner" class="sync-banner">
+        <span id="syncBannerText">✏️ Existing entry loaded — add or edit items</span>
+        <span style="font-size:10px; opacity:0.85;">No Duplicate</span>
       </div>
 
       <!-- One-Tap Quick Presets -->
       <div class="presets">
         <button type="button" class="preset-chip" onclick="quickFill('m_val', '20 (Breakfast)')">+ ₹20 Breakfast</button>
-        <button type="button" class="preset-chip" onclick="quickFill('l_val', '60 (Mess Lunch)')">+ ₹60 Lunch</button>
+        <button type="button" class="preset-chip" onclick="quickFill('l_val', '60 (Lunch)')">+ ₹60 Lunch</button>
         <button type="button" class="preset-chip" onclick="quickFill('s_val', '15 (Tea & Snacks)')">+ ₹15 Snacks</button>
-        <button type="button" class="preset-chip" onclick="quickFill('d_val', '45 (Mess Dinner)')">+ ₹45 Dinner</button>
+        <button type="button" class="preset-chip" onclick="quickFill('d_val', '45 (Dinner)')">+ ₹45 Dinner</button>
       </div>
 
       <div class="field">
-        <label>Date (Auto IST Sync)</label>
-        <input type="date" id="entryDate">
+        <label>Date (Auto IST Sync — Loads Existing Log)</label>
+        <input type="date" id="entryDate" onchange="loadEntryForSelectedDate()">
       </div>
 
       <div class="grid-2">
         <div class="field">
           <label>Morning</label>
-          <input type="text" class="smart-input" id="m_val" placeholder="e.g. 20 (Kachori)">
+          <input type="text" class="smart-input blur-sensitive" id="m_val" placeholder="e.g. 20 (Kachori)">
         </div>
         <div class="field">
           <label>Noon</label>
-          <input type="text" class="smart-input" id="l_val" placeholder="e.g. 60 (Rice Fish)">
+          <input type="text" class="smart-input blur-sensitive" id="l_val" placeholder="e.g. 60 (Rice Fish)">
         </div>
       </div>
 
       <div class="grid-2">
         <div class="field">
           <label>Afternoon</label>
-          <input type="text" class="smart-input" id="s_val" placeholder="e.g. 15 (Tea)">
+          <input type="text" class="smart-input blur-sensitive" id="s_val" placeholder="e.g. 15 (Tea)">
         </div>
         <div class="field">
           <label>Night</label>
-          <input type="text" class="smart-input" id="d_val" placeholder="e.g. 45 (Roti Tadka)">
+          <input type="text" class="smart-input blur-sensitive" id="d_val" placeholder="e.g. 45 (Roti Tadka)">
         </div>
       </div>
 
@@ -307,7 +411,7 @@
         <label>Other Expenses</label>
         <div id="othersContainer">
           <div class="other-row">
-            <input type="text" class="other-item smart-input" placeholder="e.g. 20 (Pen)">
+            <input type="text" class="other-item smart-input blur-sensitive" placeholder="e.g. 20 (Bus Fare)">
           </div>
         </div>
         <button type="button" class="btn-ghost" onclick="addOtherInput('othersContainer')">+ Add More Item</button>
@@ -315,8 +419,8 @@
 
       <div class="submit-bar">
         <div>
-          <span class="lbl-sm">Entry Total</span>
-          <div id="liveTotal" style="font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:700; color:var(--primary);">₹0</div>
+          <span class="lbl-sm">Day Total</span>
+          <div class="blur-sensitive" id="liveTotal" style="font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:800; color:var(--primary);">₹0</div>
         </div>
         <button id="saveBtn" class="btn-primary" onclick="submitExpense()">Save Entry →</button>
       </div>
@@ -330,14 +434,14 @@
         <span>🎯 Monthly Budget Planner</span>
         <button class="btn-ghost" style="padding:5px 10px; font-size:11px;" onclick="setMonthlyBudget()">Set Limit</button>
       </div>
-      <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600;">
+      <div class="blur-sensitive" style="display:flex; justify-content:space-between; font-size:13px; font-weight:600;">
         <span id="budgetSpentLbl">Spent: ₹0</span>
         <span id="budgetLimitLbl" style="color:var(--muted);">Limit: ₹4,000</span>
       </div>
       <div class="budget-bar-bg">
         <div class="budget-bar-fill" id="budgetBarFill"></div>
       </div>
-      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:6px;">
+      <div class="blur-sensitive" style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:6px;">
         <span id="budgetRemLbl">Remaining: ₹4,000</span>
         <span id="safeDailyLbl" style="color:var(--primary); font-weight:700;">Safe Daily: ₹133/day</span>
       </div>
@@ -345,14 +449,14 @@
 
     <div class="card">
       <div class="card-title">📊 Active Week Category Split</div>
-      <div class="chart-box">
+      <div class="chart-box blur-sensitive">
         <canvas id="catChart"></canvas>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title">📈 Daily Spend Trend (Active Week)</div>
-      <div class="chart-box">
+      <div class="chart-box blur-sensitive">
         <canvas id="trendChart"></canvas>
       </div>
     </div>
@@ -368,7 +472,7 @@
         </div>
         <div>
           <label>Search Item</label>
-          <input type="text" id="searchText" placeholder="Rice, Tea, Pen..." oninput="renderTable()">
+          <input type="text" id="searchText" placeholder="Bus, Roll, Rice..." oninput="renderTable()">
         </div>
         <div>
           <button class="btn-ghost" style="padding:12px 14px;" onclick="clearFilters()">Reset</button>
@@ -395,7 +499,7 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="tableBody">
+          <tbody id="tableBody" class="blur-sensitive">
             <tr><td colspan="8" style="text-align:center; padding:20px; color:var(--muted);">Loading records...</td></tr>
           </tbody>
         </table>
@@ -476,8 +580,79 @@
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbwxfQogJpmahrxUW8ejS9SgWtfsZ3jqUutC37CgqCVQw4zuIE8GZ8Nn2QAq6IHWCQu_/exec";
 
+  /* ================= CALCULATOR & PRIVACY LOGIC ================= */
+  let calcExpression = "";
+
+  function getSecretPin() {
+    return localStorage.getItem('pocketledger_pin') || "2007";
+  }
+
+  function calcAppend(val) {
+    if (calcExpression === "Error") calcExpression = "";
+    calcExpression += val;
+    document.getElementById('calcScreen').innerText = calcExpression || "0";
+  }
+
+  function calcClear() {
+    calcExpression = "";
+    document.getElementById('calcHistory').innerText = "";
+    document.getElementById('calcScreen').innerText = "0";
+  }
+
+  function calcBack() {
+    if (calcExpression === "Error") calcExpression = "";
+    calcExpression = calcExpression.slice(0, -1);
+    document.getElementById('calcScreen').innerText = calcExpression || "0";
+  }
+
+  function calcEquals() {
+    const pin = getSecretPin();
+    if (calcExpression === pin) {
+      calcClear();
+      document.getElementById('calcLockScreen').classList.add('unlocked');
+      showToast("Vault Unlocked");
+      return;
+    }
+    try {
+      if (!calcExpression) return;
+      document.getElementById('calcHistory').innerText = calcExpression;
+      const sanitized = calcExpression.replace(/[^0-9+\-*/.%]/g, '');
+      const result = Function('"use strict";return (' + sanitized + ')')();
+      calcExpression = String(Number.isFinite(result) ? Number(result.toFixed(6)) : "Error");
+      document.getElementById('calcScreen').innerText = calcExpression;
+    } catch (e) {
+      calcExpression = "Error";
+      document.getElementById('calcScreen').innerText = "Error";
+    }
+  }
+
+  function lockVault() {
+    calcClear();
+    document.getElementById('calcLockScreen').classList.remove('unlocked');
+  }
+
+  function changeSecretPin() {
+    const current = getSecretPin();
+    const nextPin = prompt("Set new Calculator unlock PIN (numbers only):", current);
+    if (nextPin && /^\d{3,8}$/.test(nextPin.trim())) {
+      localStorage.setItem('pocketledger_pin', nextPin.trim());
+      showToast(`New unlock code: ${nextPin.trim()}=`);
+    } else if (nextPin !== null) {
+      showToast("Use 3 to 8 digits only", "error");
+    }
+  }
+
+  function toggleStealthBlur() {
+    const isBlurred = document.body.classList.toggle('stealth-blur');
+    const btn = document.getElementById('eyeToggleBtn');
+    btn.classList.toggle('active-eye', isBlurred);
+    btn.innerText = isBlurred ? '🙈' : '👁️';
+  }
+
+  /* ================= EXPENSE TRACKER LOGIC ================= */
   let rawData = [];
   let currentActiveRows = [];
+  let activeEditRowId = null;
   let weekOffset = 0;
   let lastSyncedDateStr = "";
   let catChartInstance = null;
@@ -510,7 +685,11 @@
   function syncDateIfNeeded(force = false) {
     const currentLocalDate = getLocalTodayISO();
     const dateInput = document.getElementById('entryDate');
-    if (force || !dateInput.value || dateInput.value === lastSyncedDateStr) {
+    const changed = force || !dateInput.value || dateInput.value === lastSyncedDateStr;
+    if (changed && dateInput.value !== currentLocalDate) {
+      dateInput.value = currentLocalDate;
+      loadEntryForSelectedDate();
+    } else if (!dateInput.value) {
       dateInput.value = currentLocalDate;
     }
     lastSyncedDateStr = currentLocalDate;
@@ -534,9 +713,13 @@
     const t = document.getElementById('toast');
     t.innerText = msg;
     t.style.background = type === 'error' ? '#f43f5e' : '#10b981';
-    t.style.color = type === 'error' ? '#fff' : '#050507';
+    t.style.color = type === 'error' ? '#fff' : '#050a0e';
     t.style.display = 'block';
     setTimeout(() => { t.style.display = 'none'; }, 2800);
+  }
+
+  function cleanItemText(str) {
+    return String(str || '').replace(/\s*\(\s*\)/g, '').trim();
   }
 
   function extractAmount(str) {
@@ -579,11 +762,35 @@
     const div = document.createElement('div');
     div.className = 'other-row';
     div.innerHTML = `
-      <input type="text" class="other-item smart-input" value="${val}" placeholder="e.g. 50 (Auto)">
+      <input type="text" class="other-item smart-input blur-sensitive" value="${val}" placeholder="e.g. 50 (Extra)">
       <button type="button" class="btn-del-item" onclick="this.parentElement.remove(); calcPreview();">✕</button>
     `;
     container.appendChild(div);
     attachSmartListener(div.querySelector('input'));
+  }
+
+  function resetOthersContainer(containerId, items = []) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    if (items.length === 0) {
+      const div = document.createElement('div');
+      div.className = 'other-row';
+      div.innerHTML = `<input type="text" class="other-item smart-input blur-sensitive" placeholder="e.g. 20 (Bus Fare)">`;
+      container.appendChild(div);
+      attachSmartListener(div.querySelector('input'));
+    } else {
+      items.forEach((val, idx) => {
+        if (idx === 0) {
+          const div = document.createElement('div');
+          div.className = 'other-row';
+          div.innerHTML = `<input type="text" class="other-item smart-input blur-sensitive" value="${val}" placeholder="e.g. 20 (Bus Fare)">`;
+          container.appendChild(div);
+          attachSmartListener(div.querySelector('input'));
+        } else {
+          addOtherInput(containerId, val);
+        }
+      });
+    }
   }
 
   function getDynamicOthers(containerId) {
@@ -591,7 +798,7 @@
     let items = [];
     let total = 0;
     inputs.forEach(inp => {
-      const val = inp.value.trim();
+      const val = cleanItemText(inp.value);
       if (val) {
         items.push(val);
         total += extractAmount(val);
@@ -614,10 +821,53 @@
     return new Date(parts[2], parts[1] - 1, parts[0]);
   }
 
+  function loadEntryForSelectedDate() {
+    const isoDate = document.getElementById('entryDate').value;
+    const banner = document.getElementById('existingSyncBanner');
+    const saveBtn = document.getElementById('saveBtn');
+
+    if (!isoDate) return;
+    const dateFormatted = formatDateWithDay(isoDate);
+    const existing = rawData.find(r => r.date === dateFormatted);
+
+    if (existing) {
+      activeEditRowId = existing.rowId;
+      document.getElementById('m_val').value = existing.morning === "-" ? "" : existing.morning;
+      document.getElementById('l_val').value = existing.noon === "-" ? "" : existing.noon;
+      document.getElementById('s_val').value = existing.afternoon === "-" ? "" : existing.afternoon;
+      document.getElementById('d_val').value = existing.night === "-" ? "" : existing.night;
+
+      if (existing.other && existing.other !== "-") {
+        const parts = existing.other.split(',').map(p => p.trim()).filter(Boolean);
+        resetOthersContainer('othersContainer', parts);
+      } else {
+        resetOthersContainer('othersContainer', []);
+      }
+
+      document.getElementById('syncBannerText').innerText = `✏️ Loaded ${dateFormatted.split(' ')[0]} — add/edit & update`;
+      banner.classList.add('show');
+      saveBtn.innerText = 'Update Entry →';
+      saveBtn.classList.add('update-mode');
+    } else {
+      activeEditRowId = null;
+      document.getElementById('m_val').value = '';
+      document.getElementById('l_val').value = '';
+      document.getElementById('s_val').value = '';
+      document.getElementById('d_val').value = '';
+      resetOthersContainer('othersContainer', []);
+
+      banner.classList.remove('show');
+      saveBtn.innerText = 'Save Entry →';
+      saveBtn.classList.remove('update-mode');
+    }
+    calcPreview();
+  }
+
   async function fetchData() {
     try {
       const res = await fetch(API_URL);
       rawData = await res.json();
+      loadEntryForSelectedDate();
       renderTable();
     } catch (err) {
       showToast('Failed to sync cloud data', 'error');
@@ -630,10 +880,10 @@
     if (!isoDate) return showToast('Please select a date', 'error');
 
     const dateFormatted = formatDateWithDay(isoDate);
-    const m = document.getElementById('m_val').value.trim();
-    const l = document.getElementById('l_val').value.trim();
-    const s = document.getElementById('s_val').value.trim();
-    const d = document.getElementById('d_val').value.trim();
+    const m = cleanItemText(document.getElementById('m_val').value);
+    const l = cleanItemText(document.getElementById('l_val').value);
+    const s = cleanItemText(document.getElementById('s_val').value);
+    const d = cleanItemText(document.getElementById('d_val').value);
     const otherData = getDynamicOthers('othersContainer');
 
     const total = extractAmount(m) + extractAmount(l) + extractAmount(s) + extractAmount(d) + otherData.total;
@@ -641,35 +891,34 @@
       return showToast('Enter at least one expense item', 'error');
     }
 
-    btn.innerText = 'Saving...';
+    const existingRecord = rawData.find(r => r.date === dateFormatted);
+    const targetRowId = activeEditRowId || (existingRecord ? existingRecord.rowId : null);
+
+    btn.innerText = targetRowId ? 'Updating...' : 'Saving...';
     btn.disabled = true;
 
     const entry = { date: dateFormatted, morning: m, noon: l, afternoon: s, night: d, other: otherData.text, total: total };
+    const payload = targetRowId
+      ? { action: 'update', rowId: targetRowId, entry: entry }
+      : { action: 'save', entry: entry };
 
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
-        body: JSON.stringify({ action: 'save', entry: entry })
+        body: JSON.stringify(payload)
       });
       const result = await res.json();
       if (result.status === 'success') {
-        document.getElementById('m_val').value = '';
-        document.getElementById('l_val').value = '';
-        document.getElementById('s_val').value = '';
-        document.getElementById('d_val').value = '';
-        document.getElementById('othersContainer').innerHTML = '<div class="other-row"><input type="text" class="other-item smart-input" placeholder="e.g. 20 (Pen)"></div>';
-        attachSmartListener(document.querySelector('.other-item'));
-        document.getElementById('liveTotal').innerText = '₹0';
-        showToast('Entry saved to cloud!');
-        fetchData();
+        showToast(targetRowId ? 'Day entry updated!' : 'Entry saved to cloud!');
+        await fetchData();
       } else {
         throw new Error(result.message);
       }
     } catch (err) {
       showToast('Save failed: ' + err.message, 'error');
     } finally {
-      btn.innerText = 'Save Entry →';
       btn.disabled = false;
+      loadEntryForSelectedDate();
     }
   }
 
@@ -705,10 +954,10 @@
 
     const rowId = parseInt(document.getElementById('editRowId').value);
     const date = document.getElementById('editDate').value;
-    const m = document.getElementById('editM').value.trim();
-    const l = document.getElementById('editL').value.trim();
-    const s = document.getElementById('editS').value.trim();
-    const d = document.getElementById('editD').value.trim();
+    const m = cleanItemText(document.getElementById('editM').value);
+    const l = cleanItemText(document.getElementById('editL').value);
+    const s = cleanItemText(document.getElementById('editS').value);
+    const d = cleanItemText(document.getElementById('editD').value);
     const otherData = getDynamicOthers('editOthersContainer');
 
     const total = extractAmount(m) + extractAmount(l) + extractAmount(s) + extractAmount(d) + otherData.total;
@@ -823,7 +1072,7 @@
           r.other.toLowerCase().includes(sText)
         );
       }
-      centerBtn.innerHTML = `<span style="font-size:12px; color:var(--amber); font-weight:700;">Results (${filtered.length})</span>`;
+      centerBtn.innerHTML = `<span style="font-size:12px; color:var(--primary); font-weight:700;">Results (${filtered.length})</span>`;
       displayRows = filtered;
     } else {
       const range = getCalendarWeekRange(weekOffset);
@@ -843,7 +1092,6 @@
     displayRows.sort((a, b) => parseEntryDate(a.date) - parseEntryDate(b.date));
     currentActiveRows = displayRows;
 
-    // Calculate Current Month Spend
     const now = new Date();
     const monthTotal = rawData.reduce((acc, r) => {
       const d = parseEntryDate(r.date);
@@ -877,8 +1125,8 @@
         <td>${r.other}</td>
         <td><span class="amt-tag">₹${r.total}</span></td>
         <td>
-          <button class="act-btn" style="background:rgba(56,189,248,0.15); color:var(--cyan);" onclick="openEdit(${r.rowId})">✏️</button>
-          <button class="act-btn" style="background:rgba(244,63,94,0.15); color:var(--danger);" onclick="deleteSingleRow(${r.rowId})">🗑️</button>
+          <button class="act-btn" style="background:rgba(6,182,212,0.18); color:#67e8f9;" onclick="openEdit(${r.rowId})">✏️</button>
+          <button class="act-btn" style="background:rgba(244,63,94,0.16); color:var(--rose);" onclick="deleteSingleRow(${r.rowId})">🗑️</button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -901,19 +1149,18 @@
     document.getElementById('statMax').innerText = `₹${max}`;
   }
 
-  // Monthly Budget Logic
   function setMonthlyBudget() {
-    const current = localStorage.getItem('pl_monthly_budget') || 4000;
+    const current = localStorage.getItem('pocketledger_monthly_budget') || 4000;
     const val = prompt("Enter Monthly Budget Limit (₹):", current);
     if (val && !isNaN(val) && Number(val) > 0) {
-      localStorage.setItem('pl_monthly_budget', Number(val));
+      localStorage.setItem('pocketledger_monthly_budget', Number(val));
       renderTable();
       showToast(`Monthly budget set to ₹${val}`);
     }
   }
 
   function updateBudgetUI(monthSpent) {
-    const limit = Number(localStorage.getItem('pl_monthly_budget')) || 4000;
+    const limit = Number(localStorage.getItem('pocketledger_monthly_budget')) || 4000;
     const pct = Math.min((monthSpent / limit) * 100, 100);
     const rem = Math.max(limit - monthSpent, 0);
 
@@ -924,7 +1171,7 @@
 
     const bar = document.getElementById('budgetBarFill');
     bar.style.width = `${pct}%`;
-    bar.style.background = pct > 90 ? 'var(--danger)' : (pct > 70 ? 'var(--amber)' : 'var(--primary)');
+    bar.style.background = pct > 90 ? 'var(--rose)' : 'linear-gradient(90deg, #06b6d4, #10b981)';
 
     document.getElementById('budgetSpentLbl').innerText = `Spent: ₹${monthSpent}`;
     document.getElementById('budgetLimitLbl').innerText = `Limit: ₹${limit}`;
@@ -932,7 +1179,6 @@
     document.getElementById('safeDailyLbl').innerText = `Safe Daily: ₹${safeDaily}/day`;
   }
 
-  // Interactive Charts
   function renderCharts() {
     let m = 0, l = 0, s = 0, d = 0, o = 0;
     const labels = [];
@@ -955,13 +1201,13 @@
         labels: ['Morning', 'Lunch', 'Snacks', 'Dinner', 'Other'],
         datasets: [{
           data: [m, l, s, d, o],
-          backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#a855f7', '#f43f5e'],
+          backgroundColor: ['#06b6d4', '#10b981', '#f59e0b', '#818cf8', '#f43f5e'],
           borderWidth: 0
         }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: 'right', labels: { color: '#f4f4f5', font: { size: 11 } } } }
+        plugins: { legend: { position: 'right', labels: { color: '#f1f5f9', font: { size: 11 } } } }
       }
     });
 
@@ -980,19 +1226,18 @@
       options: {
         responsive: true, maintainAspectRatio: false,
         scales: {
-          x: { ticks: { color: '#8e929f', font: { size: 10 } }, grid: { display: false } },
-          y: { ticks: { color: '#8e929f', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          x: { ticks: { color: '#8ca0b3', font: { size: 10 } }, grid: { display: false } },
+          y: { ticks: { color: '#8ca0b3', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
         },
         plugins: { legend: { display: false } }
       }
     });
   }
 
-  // WhatsApp / Text Summary Share
   function shareWeeklyReport() {
     if (currentActiveRows.length === 0) return showToast("No records in active week to share", "error");
     let total = 0;
-    let lines = ["*📊 PocketLedger Pro - Weekly Expense Summary*", ""];
+    let lines = ["*💼 PocketLedger Pro - Weekly Summary*", ""];
     currentActiveRows.forEach(r => {
       total += r.total;
       lines.push(`• ${r.date}: *₹${r.total}*`);
@@ -1006,7 +1251,6 @@
     showToast("Summary copied & opening WhatsApp...");
   }
 
-  // Native PDF Generator & Share
   async function exportPDF() {
     if (currentActiveRows.length === 0) {
       return showToast("No records available to export", "error");
@@ -1022,7 +1266,7 @@
 
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Student: Ayan Karmakar | Generated: ${new Date().toLocaleDateString('en-IN')}`, 14, 25);
+    doc.text(`Account: Ayan Karmakar | Generated: ${new Date().toLocaleDateString('en-IN')}`, 14, 25);
 
     let grandTotal = 0;
     const tableRows = currentActiveRows.map(r => {
@@ -1037,17 +1281,17 @@
       head: [['Date & Day', 'Morning', 'Noon', 'Afternoon', 'Night', 'Other', 'Total']],
       body: tableRows,
       theme: 'grid',
-      headStyles: { fillColor: [16, 185, 129], textColor: [5, 5, 7], fontStyle: 'bold' },
+      headStyles: { fillColor: [16, 185, 129], textColor: [5, 10, 14], fontStyle: 'bold' },
       styles: { fontSize: 8, cellPadding: 3 },
       didParseCell: function (data) {
         if (data.row.index === tableRows.length - 1) {
           data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.fillColor = [240, 253, 244];
+          data.cell.styles.fillColor = [236, 253, 245];
         }
       }
     });
 
-    const fileName = `Expense_Report_${getLocalTodayISO()}.pdf`;
+    const fileName = `PocketLedger_${getLocalTodayISO()}.pdf`;
     const pdfBlob = doc.output('blob');
     const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
@@ -1055,8 +1299,8 @@
       try {
         await navigator.share({
           files: [pdfFile],
-          title: 'Expense Report',
-          text: 'Weekly Mess & Expense Report'
+          title: 'PocketLedger Pro Report',
+          text: 'Personal Weekly Expense Report'
         });
         return;
       } catch (err) {
