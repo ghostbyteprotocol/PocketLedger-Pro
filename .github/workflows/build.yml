@@ -1,9 +1,12 @@
-name: Build Android APK
+name: Build & Release APK
 
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -35,9 +38,14 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+          mv app/build/outputs/apk/debug/app-debug.apk ../PocketLedger-Pro.apk
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Create Auto Release on GitHub
+        uses: softprops/action-gh-release@v2
         with:
-          name: PocketLedger-Pro-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          tag_name: v1.0.${{ github.run_number }}
+          name: PocketLedger Pro v1.0.${{ github.run_number }}
+          body: "Latest update with bug fixes and new features."
+          files: PocketLedger-Pro.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
