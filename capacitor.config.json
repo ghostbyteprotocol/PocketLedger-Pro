@@ -1,0 +1,8 @@
+{
+  "appId": "com.ayan.pocketledger",
+  "appName": "PocketLedger Pro",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
