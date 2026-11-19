@@ -3,6 +3,7 @@
   "appName": "PocketLedger Pro",
   "webDir": "www",
   "server": {
-    "androidScheme": "https"
+    "url": "https://ghostbyteprotocol.github.io/PocketLedger-Pro/",
+    "cleartext": true
   }
 }
