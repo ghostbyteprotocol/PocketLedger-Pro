@@ -48,7 +48,7 @@
       box-shadow: 0 4px 14px var(--primary-glow);
     }
     .app-name { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
-    .app-ver { font-size: 10px; color: var(--muted); cursor: pointer; }
+    .app-sub { font-size: 10px; color: var(--muted); }
     .status-chip {
       display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;
       padding: 5px 11px; border-radius: 99px; background: rgba(16, 185, 129, 0.12);
@@ -194,7 +194,7 @@
     .nav-tab span.ic { font-size: 17px; margin-bottom: 2px; }
     .nav-tab.active { background: rgba(16, 185, 129, 0.16); color: var(--primary); }
 
-    /* Modals */
+    /* Edit Modal */
     .modal-overlay {
       display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85);
       backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 18px;
@@ -202,11 +202,6 @@
     .modal-box {
       background: var(--surface); border: 1px solid var(--border); width: 100%;
       max-width: 440px; border-radius: 24px; padding: 22px; max-height: 90vh; overflow-y: auto;
-    }
-    .update-card { text-align: center; border: 1px solid rgba(16, 185, 129, 0.4); }
-    .update-badge {
-      display: inline-block; background: rgba(16, 185, 129, 0.15); color: var(--primary);
-      padding: 5px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; margin-bottom: 12px;
     }
 
     /* Toast */
@@ -239,7 +234,7 @@
       <div class="logo-box">₹</div>
       <div>
         <div class="app-name">PocketLedger Pro</div>
-        <div class="app-ver" id="appVerLabel" onclick="checkAppUpdate(true)">v1.0.4 • Tap to check updates</div>
+        <div class="app-sub">Smart Mess & Expense Log</div>
       </div>
     </div>
     <div class="status-chip"><span class="dot"></span> Synced</div>
@@ -488,27 +483,10 @@
   </div>
 </div>
 
-<!-- Force Update Modal -->
-<div id="updateModal" class="modal-overlay">
-  <div class="modal-box update-card">
-    <div class="update-badge" id="newVerBadge">🚀 NEW UPDATE AVAILABLE</div>
-    <div style="font-family:'Space Grotesk',sans-serif; font-size:21px; font-weight:700; margin-bottom:8px;">Update Required</div>
-    <div style="font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:20px;">
-      A new version of PocketLedger Pro is live on GitHub with UI upgrades and bug fixes. Please update to continue.
-    </div>
-    <div class="grid-2">
-      <button type="button" style="background:rgba(244,63,94,0.15); color:var(--danger); border:1px solid rgba(244,63,94,0.3); padding:13px; border-radius:14px; font-weight:700; cursor:pointer;" onclick="exitApp()">Close App</button>
-      <button type="button" class="btn-primary" id="updateNowBtn">Update Now</button>
-    </div>
-  </div>
-</div>
-
 <div id="toast"></div>
 
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbwxfQogJpmahrxUW8ejS9SgWtfsZ3jqUutC37CgqCVQw4zuIE8GZ8Nn2QAq6IHWCQu_/exec";
-  const CURRENT_APP_VERSION = "v1.0.4";
-  const GITHUB_REPO = "ghostbyteprotocol/PocketLedger-Pro";
 
   let rawData = [];
   let currentActiveRows = [];
@@ -550,50 +528,10 @@
     lastSyncedDateStr = currentLocalDate;
   }
 
-  async function checkAppUpdate(manual = false) {
-    try {
-      const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest?t=${Date.now()}`);
-      if (!res.ok) {
-        if (manual) showToast("You are on the latest version!");
-        return;
-      }
-      const data = await res.json();
-      const latestTag = data.tag_name;
-
-      if (latestTag && latestTag !== CURRENT_APP_VERSION) {
-        document.getElementById('newVerBadge').innerText = `🚀 UPDATE ${latestTag} AVAILABLE`;
-        const apkAsset = data.assets && data.assets.find(a => a.name.endsWith('.apk'));
-        const redirectUrl = apkAsset ? apkAsset.browser_download_url : data.html_url;
-
-        document.getElementById('updateNowBtn').onclick = () => {
-          window.open(redirectUrl, '_system') || (window.location.href = redirectUrl);
-        };
-        document.getElementById('updateModal').style.display = 'flex';
-      } else if (manual) {
-        showToast("App is up to date!");
-      }
-    } catch (e) {
-      if (manual) showToast("Unable to check updates offline", "error");
-    }
-  }
-
-  function exitApp() {
-    if (navigator.app && navigator.app.exitApp) {
-      navigator.app.exitApp();
-    } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
-      window.Capacitor.Plugins.App.exitApp();
-    } else {
-      window.close();
-      document.body.innerHTML = '<div style="display:flex;height:100vh;align-items:center;justify-content:center;color:#f43f5e;font-family:sans-serif;font-weight:700;">App Closed.</div>';
-    }
-  }
-
   window.onload = () => {
-    document.getElementById('appVerLabel').innerText = `${CURRENT_APP_VERSION} • Tap to check updates`;
     syncDateIfNeeded(true);
     document.querySelectorAll('.smart-input').forEach(attachSmartListener);
     fetchData();
-    checkAppUpdate(false);
 
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
