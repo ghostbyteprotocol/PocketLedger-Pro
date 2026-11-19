@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PocketLedger Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --accent-cyan: #38bdf8;
+    }
+
+    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); padding: 16px; min-height: 100vh; }
+    .container { max-width: 960px; margin: 0 auto; }
+
+    input, button, select {
+      width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--card-border);
+      background: #0f172a; color: white; margin-top: 6px; font-size: 14px; outline: none; transition: 0.2s;
+    }
+    input:focus { border-color: var(--accent-cyan); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+    button {
+      background: var(--primary); color: white; border: none; font-weight: 700;
+      cursor: pointer; margin-top: 14px; padding: 12px; border-radius: 10px; transition: 0.2s;
+    }
+    button:hover { background: var(--primary-hover); }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Title Bar */
+    .title-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+    .title { font-size: 22px; font-weight: 800; color: var(--accent-cyan); letter-spacing: -0.3px; }
+    .live-badge { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-green); color: var(--accent-green); padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .stat-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 14px; }
+    .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+    .stat-val { font-size: 22px; font-weight: 800; margin-top: 4px; color: var(--text); }
+
+    /* Category Progress Breakdown */
+    .breakdown-box { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 14px; margin-bottom: 16px; }
+    .bar-container { display: flex; height: 10px; border-radius: 6px; overflow: hidden; margin-top: 10px; background: #0f172a; }
+    .bar-seg { height: 100%; transition: width 0.3s ease; }
+
+    /* Cards */
+    .card { background: var(--card); padding: 20px; border-radius: 16px; margin-bottom: 16px; border: 1px solid var(--card-border); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { margin-top: 10px; }
+    label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+
+    /* Search Bar */
+    .search-panel { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
+
+    /* Navigation Bar */
+    .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; flex-wrap: wrap; }
+    .nav-btn { width: auto; margin: 0; padding: 8px 14px; font-size: 12px; background: #334155; color: white; border-radius: 8px; }
+    .fire-btn { background: #ea580c !important; color: white !important; font-weight: 800; animation: pulse 1.5s infinite; }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(234, 88, 12, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+    }
+
+    /* Dynamic Other Items */
+    .other-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+    .btn-add-other { width: auto; margin: 8px 0 0; padding: 6px 14px; font-size: 12px; background: #334155; border-radius: 8px; }
+    .btn-remove-other { width: auto; margin: 0; padding: 10px 14px; background: rgba(239,68,68,0.2); border: 1px solid var(--accent-red); color: var(--accent-red); border-radius: 8px; font-size: 12px; cursor: pointer; }
+
+    /* Table */
+    .table-responsive { overflow-x: auto; border-radius: 12px; border: 1px solid var(--card-border); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid var(--card-border); }
+    th { background: #0f172a; color: var(--text-muted); font-weight: 700; white-space: nowrap; }
+    td { white-space: nowrap; }
+    .day-badge { background: #334155; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; }
+    .total-badge { background: rgba(16,185,129,0.15); color: var(--accent-green); font-weight: 800; padding: 4px 8px; border-radius: 6px; font-size: 12px; border: 1px solid rgba(16,185,129,0.3); }
+
+    /* Action Buttons */
+    .btn-edit { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid #3b82f6; padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; width: auto; margin: 0 4px 0 0; }
+    .btn-del { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid #ef4444; padding: 5px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; width: auto; margin: 0; }
+    .btn-del-week { background: rgba(239,68,68,0.15); border: 1px solid #ef4444; color: #fca5a5; font-size: 12px; padding: 9px 14px; border-radius: 8px; width: auto; margin: 0; }
+    .action-btn { width: auto; margin: 0; padding: 9px 16px; font-size: 12px; background: #0284c7; }
+
+    /* Modal */
+    #editModal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); z-index: 999;
+      justify-content: center; align-items: center; padding: 16px;
+    }
+    .modal-content {
+      background: var(--card); border: 1px solid var(--card-border); width: 100%;
+      max-width: 520px; border-radius: 16px; padding: 22px; max-height: 90vh; overflow-y: auto;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: #10b981; color: white; padding: 10px 20px; border-radius: 10px;
+      font-weight: 700; font-size: 13px; display: none; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    @media (max-width: 600px) {
+      .grid-2, .search-panel { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      body { background: white !important; color: black !important; padding: 0; }
+      #add-card, .search-panel, .nav-bar, .stats-grid, .breakdown-box, .btn-edit, .btn-del, .btn-del-week, .action-btn, th:last-child, td:last-child {
+        display: none !important;
+      }
+      .card { border: none !important; background: transparent !important; padding: 0 !important; }
+      table { border-collapse: collapse; font-size: 11px; width: 100%; }
+      th, td { border: 1px solid #000 !important; color: black !important; padding: 6px !important; }
+      th { background: #e2e8f0 !important; }
+      .print-header { display: block !important; margin-bottom: 15px; }
+    }
+    .print-header { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="title-bar">
+    <div>
+      <div class="title">POCKETLEDGER PRO</div>
+      <small style="color:var(--text-muted); font-size:12px;">Cloud Synced Mess & Daily Expense Tracker</small>
+    </div>
+    <div class="live-badge" id="liveRateBadge">● Cloud Sync Active</div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Active Week Total</div>
+      <div class="stat-val" id="statTotal" style="color:var(--accent-cyan);">₹0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Daily Average</div>
+      <div class="stat-val" id="statAvg" style="color:var(--accent-green);">₹0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Recorded Days</div>
+      <div class="stat-val" id="statEntries" style="color:var(--accent-amber);">0 Days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Highest Day Expense</div>
+      <div class="stat-val" id="statMax" style="color:var(--accent-red);">₹0</div>
+    </div>
+  </div>
+
+  <!-- Category Expense Breakdown Bar -->
+  <div class="breakdown-box">
+    <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:var(--text-muted);">
+      <span>CATEGORIES SHARE</span>
+      <span>Morning / Lunch / Snacks / Dinner / Other</span>
+    </div>
+    <div class="bar-container">
+      <div id="barM" class="bar-seg" style="background:#38bdf8;" title="Morning"></div>
+      <div id="barL" class="bar-seg" style="background:#10b981;" title="Lunch"></div>
+      <div id="barS" class="bar-seg" style="background:#f59e0b;" title="Snacks"></div>
+      <div id="barD" class="bar-seg" style="background:#818cf8;" title="Dinner"></div>
+      <div id="barO" class="bar-seg" style="background:#ef4444;" title="Other"></div>
+    </div>
+  </div>
+
+  <!-- Entry Form -->
+  <div class="card" id="add-card">
+    <h3 style="font-size:16px; margin-bottom: 12px;">📝 Record Daily Meal & Expenses</h3>
+    
+    <div class="form-group">
+      <label>Date (Auto Synced with Today)</label>
+      <input type="date" id="entryDate">
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Morning (Breakfast)</label>
+        <input type="text" class="smart-input" id="m_val" placeholder="e.g. 20 (Kachori)">
+      </div>
+      <div class="form-group">
+        <label>Noon (Lunch)</label>
+        <input type="text" class="smart-input" id="l_val" placeholder="e.g. 60 (Rice Fish)">
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Afternoon (Snacks)</label>
+        <input type="text" class="smart-input" id="s_val" placeholder="e.g. 15 (Tea)">
+      </div>
+      <div class="form-group">
+        <label>Night (Dinner)</label>
+        <input type="text" class="smart-input" id="d_val" placeholder="e.g. 45 (Roti Tadka)">
+      </div>
+    </div>
+
+    <!-- Dynamic Others -->
+    <div class="form-group">
+      <label>Other Expenses (Stationery, Travel, etc.)</label>
+      <div id="othersContainer">
+        <div class="other-row">
+          <input type="text" class="other-item smart-input" placeholder="e.g. 20 (Khata Pen)">
+        </div>
+      </div>
+      <button type="button" class="btn-add-other" onclick="addOtherInput('othersContainer')">+ Add More Item</button>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding:12px; background:#0f172a; border-radius:10px; border:1px solid var(--card-border);">
+      <span style="font-size:13px; color:var(--text-muted); font-weight:600;">Entry Total Preview:</span>
+      <span id="liveTotal" style="font-size:18px; font-weight:800; color:var(--accent-green);">₹0</span>
+    </div>
+
+    <button id="saveBtn" onclick="submitExpense()">💾 Save Daily Entry</button>
+  </div>
+
+  <!-- Table Section -->
+  <div class="card" id="report-section">
+    <div class="print-header">
+      <h2>EXPENSES & MESS REPORT</h2>
+      <p>Student: Ayan Karmakar | Generated via PocketLedger Pro</p>
+    </div>
+
+    <!-- Live Search & Date Filter -->
+    <div class="search-panel">
+      <div>
+        <label>🔍 Search Specific Date</label>
+        <input type="date" id="searchDate" oninput="renderTable()">
+      </div>
+      <div>
+        <label>🔎 Search Item or Keyword</label>
+        <input type="text" id="searchText" placeholder="e.g. Rice, Pen, Xerox" oninput="renderTable()">
+      </div>
+      <div>
+        <button onclick="clearFilters()" style="margin:0; padding:12px; background:#334155; font-size:12px;">Reset</button>
+      </div>
+    </div>
+
+    <div class="nav-bar">
+      <button class="nav-btn" onclick="prevWeek()">← Prev Week</button>
+      <div id="centerWeekBtn" style="text-align:center;"></div>
+      <button class="nav-btn" onclick="nextWeek()">Next Week →</button>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Date & Day</th>
+            <th>Morning</th>
+            <th>Noon</th>
+            <th>Afternoon</th>
+            <th>Night</th>
+            <th>Other</th>
+            <th>Total</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">Loading cloud data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; flex-wrap:wrap; gap:10px;">
+      <div id="weekDeleteContainer"></div>
+      <button class="action-btn" onclick="window.print()">🖨️ Print / Save PDF Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal">
+  <div class="modal-content">
+    <h3 style="margin-bottom:14px; color:var(--accent-cyan);">✏️ Edit Expense Entry</h3>
+    <input type="hidden" id="editRowId">
+    
+    <div class="form-group">
+      <label>Date & Day String</label>
+      <input type="text" id="editDate">
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Morning</label>
+        <input type="text" class="smart-input" id="editM">
+      </div>
+      <div class="form-group">
+        <label>Noon</label>
+        <input type="text" class="smart-input" id="editL">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Afternoon</label>
+        <input type="text" class="smart-input" id="editS">
+      </div>
+      <div class="form-group">
+        <label>Night</label>
+        <input type="text" class="smart-input" id="editD">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Other Expenses</label>
+      <div id="editOthersContainer"></div>
+      <button type="button" class="btn-add-other" onclick="addOtherInput('editOthersContainer')">+ Add Item</button>
+    </div>
+
+    <div class="grid-2" style="margin-top:16px;">
+      <button type="button" onclick="closeModal()" style="background:#334155; margin:0;">Cancel</button>
+      <button type="button" id="updateModalBtn" onclick="saveEdit()" style="margin:0;">Update Entry</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbwxfQogJpmahrxUW8ejS9SgWtfsZ3jqUutC37CgqCVQw4zuIE8GZ8Nn2QAq6IHWCQu_/exec";
+  
+  let rawData = [];
+  let weekOffset = 0;
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  window.onload = () => {
+    const today = new Date();
+    document.getElementById('entryDate').value = today.toISOString().split('T')[0];
+    document.querySelectorAll('.smart-input').forEach(attachSmartListener);
+    fetchData();
+  };
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.style.background = type === 'error' ? '#ef4444' : '#10b981';
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3000);
+  }
+
+  function extractAmount(str) {
+    if (!str || str === "-") return 0;
+    const matches = String(str).match(/\d+(\.\d+)?/g);
+    if (!matches) return 0;
+    return matches.reduce((sum, num) => sum + parseFloat(num), 0);
+  }
+
+  function attachSmartListener(input) {
+    input.addEventListener('input', calcPreview);
+  }
+
+  function calcPreview() {
+    const m = extractAmount(document.getElementById('m_val').value);
+    const l = extractAmount(document.getElementById('l_val').value);
+    const s = extractAmount(document.getElementById('s_val').value);
+    const d = extractAmount(document.getElementById('d_val').value);
+    const otherData = getDynamicOthers('othersContainer');
+    const total = m + l + s + d + otherData.total;
+    document.getElementById('liveTotal').innerText = '₹' + total;
+  }
+
+  function addOtherInput(containerId, val = '') {
+    const container = document.getElementById(containerId);
+    const div = document.createElement('div');
+    div.className = 'other-row';
+    div.innerHTML = `
+      <input type="text" class="other-item smart-input" value="${val}" placeholder="e.g. 50 (Auto)">
+      <button type="button" class="btn-remove-other" onclick="this.parentElement.remove(); calcPreview();">✕</button>
+    `;
+    container.appendChild(div);
+    attachSmartListener(div.querySelector('input'));
+  }
+
+  function getDynamicOthers(containerId) {
+    const inputs = document.querySelectorAll(`#${containerId} .other-item`);
+    let items = [];
+    let total = 0;
+    inputs.forEach(inp => {
+      const val = inp.value.trim();
+      if (val) {
+        items.push(val);
+        total += extractAmount(val);
+      }
+    });
+    return { text: items.join(', '), total: total };
+  }
+
+  function formatDateWithDay(isoDate) {
+    if (!isoDate) return "";
+    const parts = isoDate.split('-');
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    const dayName = daysOfWeek[d.getDay()];
+    return `${parts[2]}/${parts[1]}/${parts[0]} (${dayName})`;
+  }
+
+  function parseEntryDate(dateStr) {
+    const datePart = dateStr.split(' ')[0];
+    const parts = datePart.split('/');
+    if (parts.length !== 3) return new Date(0);
+    return new Date(parts[2], parts[1] - 1, parts[0]);
+  }
+
+  async function fetchData() {
+    try {
+      const res = await fetch(API_URL);
+      rawData = await res.json();
+      renderTable();
+    } catch (err) {
+      showToast('ডেটা লোড করতে সমস্যা হয়েছে!', 'error');
+    }
+  }
+
+  async function submitExpense() {
+    const btn = document.getElementById('saveBtn');
+    const isoDate = document.getElementById('entryDate').value;
+    if (!isoDate) return showToast('তারিখ সিলেক্ট কর!', 'error');
+
+    const dateFormatted = formatDateWithDay(isoDate);
+    const m = document.getElementById('m_val').value.trim();
+    const l = document.getElementById('l_val').value.trim();
+    const s = document.getElementById('s_val').value.trim();
+    const d = document.getElementById('d_val').value.trim();
+    const otherData = getDynamicOthers('othersContainer');
+
+    const total = extractAmount(m) + extractAmount(l) + extractAmount(s) + extractAmount(d) + otherData.total;
+    if (total === 0 && !m && !l && !s && !d && !otherData.text) {
+      return showToast('কমপক্ষে একটা খরচ লেখ!', 'error');
+    }
+
+    btn.innerText = '⏳ Saving to Cloud...';
+    btn.disabled = true;
+
+    const entry = { date: dateFormatted, morning: m, noon: l, afternoon: s, night: d, other: otherData.text, total: total };
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'save', entry: entry })
+      });
+      const result = await res.json();
+      if (result.status === 'success') {
+        document.getElementById('m_val').value = '';
+        document.getElementById('l_val').value = '';
+        document.getElementById('s_val').value = '';
+        document.getElementById('d_val').value = '';
+        document.getElementById('othersContainer').innerHTML = '<div class="other-row"><input type="text" class="other-item smart-input" placeholder="e.g. 20 (Khata Pen)"></div>';
+        attachSmartListener(document.querySelector('.other-item'));
+        document.getElementById('liveTotal').innerText = '₹0';
+        showToast('✅ সফলভাবে সেভ হয়েছে!');
+        fetchData();
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (err) {
+      showToast('সেভ হতে সমস্যা: ' + err.message, 'error');
+    } finally {
+      btn.innerText = '💾 Save Daily Entry';
+      btn.disabled = false;
+    }
+  }
+
+  function openEdit(rowId) {
+    const item = rawData.find(r => r.rowId === rowId);
+    if (!item) return;
+
+    document.getElementById('editRowId').value = item.rowId;
+    document.getElementById('editDate').value = item.date;
+    document.getElementById('editM').value = item.morning === "-" ? "" : item.morning;
+    document.getElementById('editL').value = item.noon === "-" ? "" : item.noon;
+    document.getElementById('editS').value = item.afternoon === "-" ? "" : item.afternoon;
+    document.getElementById('editD').value = item.night === "-" ? "" : item.night;
+
+    const editCont = document.getElementById('editOthersContainer');
+    editCont.innerHTML = '';
+    if (item.other && item.other !== "-") {
+      item.other.split(',').forEach(p => addOtherInput('editOthersContainer', p.trim()));
+    } else {
+      addOtherInput('editOthersContainer');
+    }
+
+    document.getElementById('editModal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+  }
+
+  async function saveEdit() {
+    const btn = document.getElementById('updateModalBtn');
+    btn.innerText = 'Updating...';
+    btn.disabled = true;
+
+    const rowId = parseInt(document.getElementById('editRowId').value);
+    const date = document.getElementById('editDate').value;
+    const m = document.getElementById('editM').value.trim();
+    const l = document.getElementById('editL').value.trim();
+    const s = document.getElementById('editS').value.trim();
+    const d = document.getElementById('editD').value.trim();
+    const otherData = getDynamicOthers('editOthersContainer');
+
+    const total = extractAmount(m) + extractAmount(l) + extractAmount(s) + extractAmount(d) + otherData.total;
+    const entry = { date: date, morning: m, noon: l, afternoon: s, night: d, other: otherData.text, total: total };
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'update', rowId: rowId, entry: entry })
+      });
+      const result = await res.json();
+      if (result.status === 'success') {
+        closeModal();
+        showToast('✅ এন্ট্রি আপডেট হয়েছে!');
+        fetchData();
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (err) {
+      showToast('আপডেট ব্যর্থ: ' + err.message, 'error');
+    } finally {
+      btn.innerText = 'Update Entry';
+      btn.disabled = false;
+    }
+  }
+
+  async function deleteSingleRow(rowId) {
+    if (!confirm('এই দিনের এন্ট্রি নিশ্চিত ডিলিট করতে চাস?')) return;
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'delete', rowId: rowId })
+      });
+      const result = await res.json();
+      if (result.status === 'success') {
+        showToast('🗑️ ডিলিট করা হয়েছে!');
+        fetchData();
+      }
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  }
+
+  async function deleteCurrentWeek(rowIds) {
+    if (!confirm('এই পুরো সপ্তাহের সব রেকর্ড মুছে ফেলবি?')) return;
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'deleteWeek', rowIds: rowIds })
+      });
+      const result = await res.json();
+      if (result.status === 'success') {
+        showToast('🗑️ পুরো সপ্তাহ ডিলিট হয়েছে!');
+        fetchData();
+      }
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  }
+
+  function clearFilters() {
+    document.getElementById('searchDate').value = '';
+    document.getElementById('searchText').value = '';
+    renderTable();
+  }
+
+  function getCalendarWeekRange(offset) {
+    const now = new Date();
+    const day = now.getDay();
+    const diffToMon = now.getDate() - day + (day === 0 ? -6 : 1) + (offset * 7);
+    const start = new Date(now.getFullYear(), now.getMonth(), diffToMon);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }
+
+  function formatDateShort(d) {
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  }
+
+  function prevWeek() { weekOffset--; renderTable(); }
+  function nextWeek() { weekOffset++; renderTable(); }
+  function resetToCurrentWeek() { weekOffset = 0; clearFilters(); }
+
+  function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    const centerBtn = document.getElementById('centerWeekBtn');
+    const weekDelCont = document.getElementById('weekDeleteContainer');
+    const sDate = document.getElementById('searchDate').value;
+    const sText = document.getElementById('searchText').value.toLowerCase().trim();
+
+    tbody.innerHTML = '';
+    const isSearchActive = sDate || sText;
+    let displayRows = [];
+
+    if (isSearchActive) {
+      let filtered = [...rawData];
+      if (sDate) {
+        const parts = sDate.split('-');
+        const targetDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        filtered = filtered.filter(r => r.date.startsWith(targetDate));
+      }
+      if (sText) {
+        filtered = filtered.filter(r =>
+          r.date.toLowerCase().includes(sText) ||
+          r.morning.toLowerCase().includes(sText) ||
+          r.noon.toLowerCase().includes(sText) ||
+          r.afternoon.toLowerCase().includes(sText) ||
+          r.night.toLowerCase().includes(sText) ||
+          r.other.toLowerCase().includes(sText)
+        );
+      }
+      centerBtn.innerHTML = `<span style="font-size:12px; color:var(--accent-amber); font-weight:700;">🔍 Search Results (${filtered.length})</span>`;
+      displayRows = filtered;
+    } else {
+      const range = getCalendarWeekRange(weekOffset);
+      const rangeText = `${formatDateShort(range.start)} - ${formatDateShort(range.end)}`;
+      if (weekOffset === 0) {
+        centerBtn.innerHTML = `<strong style="font-size:13px; color:var(--accent-cyan);">Current Week</strong><br><small style="color:var(--text-muted); font-size:11px;">(${rangeText})</small>`;
+      } else {
+        centerBtn.innerHTML = `<button class="nav-btn fire-btn" onclick="resetToCurrentWeek()">Back to Current Week (${rangeText})</button>`;
+      }
+
+      displayRows = rawData.filter(r => {
+        const d = parseEntryDate(r.date);
+        return d >= range.start && d <= range.end;
+      });
+    }
+
+    displayRows.sort((a, b) => parseEntryDate(a.date) - parseEntryDate(b.date));
+
+    if (displayRows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:18px; color:var(--text-muted);">এই সময়ে কোনো রেকর্ড নেই!</td></tr>`;
+      updateStats(0, 0, 0, 0, 0, 0, 0, 0);
+      weekDelCont.innerHTML = '';
+      return;
+    }
+
+    let viewTotal = 0, maxExpense = 0;
+    let sumM = 0, sumL = 0, sumS = 0, sumD = 0, sumO = 0;
+    let currentRowIds = [];
+
+    displayRows.forEach(r => {
+      currentRowIds.push(r.rowId);
+      const valM = extractAmount(r.morning);
+      const valL = extractAmount(r.noon);
+      const valS = extractAmount(r.afternoon);
+      const valD = extractAmount(r.night);
+      const valO = extractAmount(r.other);
+
+      sumM += valM; sumL += valL; sumS += valS; sumD += valD; sumO += valO;
+      viewTotal += r.total;
+      if (r.total > maxExpense) maxExpense = r.total;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="day-badge">${r.date}</span></td>
+        <td>${r.morning}</td>
+        <td>${r.noon}</td>
+        <td>${r.afternoon}</td>
+        <td>${r.night}</td>
+        <td>${r.other}</td>
+        <td><span class="total-badge">₹${r.total}</span></td>
+        <td>
+          <button class="btn-edit" onclick="openEdit(${r.rowId})">✏️</button>
+          <button class="btn-del" onclick="deleteSingleRow(${r.rowId})">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    if (displayRows.length > 0 && !isSearchActive) {
+      weekDelCont.innerHTML = `<button class="btn-del-week" onclick='deleteCurrentWeek(${JSON.stringify(currentRowIds)})'>🗑️ Delete Active Week's Records</button>`;
+    } else {
+      weekDelCont.innerHTML = '';
+    }
+
+    updateStats(viewTotal, displayRows.length, maxExpense, sumM, sumL, sumS, sumD, sumO);
+  }
+
+  function updateStats(total, count, max, m, l, s, d, o) {
+    document.getElementById('statTotal').innerText = `₹${total}`;
+    document.getElementById('statAvg').innerText = count > 0 ? `₹${Math.round(total / count)}/day` : '₹0';
+    document.getElementById('statEntries').innerText = `${count} Days`;
+    document.getElementById('statMax').innerText = `₹${max}`;
+
+    if (total > 0) {
+      document.getElementById('barM').style.width = `${(m / total) * 100}%`;
+      document.getElementById('barL').style.width = `${(l / total) * 100}%`;
+      document.getElementById('barS').style.width = `${(s / total) * 100}%`;
+      document.getElementById('barD').style.width = `${(d / total) * 100}%`;
+      document.getElementById('barO').style.width = `${(o / total) * 100}%`;
+    } else {
+      ['barM', 'barL', 'barS', 'barD', 'barO'].forEach(id => document.getElementById(id).style.width = '0%');
+    }
+  }
+</script>
+</body>
+</html>
