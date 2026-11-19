@@ -6,6 +6,8 @@
   <title>PocketLedger Pro</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
     :root {
       --bg: #050507;
@@ -214,15 +216,6 @@
     @media (max-width: 600px) {
       .filter-grid { grid-template-columns: 1fr; }
     }
-    @media print {
-      body { background: #fff !important; color: #000 !important; padding: 0; }
-      .topbar, .bottom-nav, #tab-entry, #tab-analytics, .filter-grid, .week-nav, .action-row, th:last-child, td:last-child { display: none !important; }
-      #tab-ledger { display: block !important; }
-      .card { border: none !important; background: transparent !important; padding: 0 !important; }
-      th, td { border: 1px solid #000 !important; color: #000 !important; background: #fff !important; }
-      .print-header { display: block !important; margin-bottom: 12px; }
-    }
-    .print-header { display: none; }
   </style>
 </head>
 <body>
@@ -368,11 +361,6 @@
   <!-- TAB 3: FULL LEDGER & REPORTS -->
   <div id="tab-ledger" class="tab-view">
     <div class="card">
-      <div class="print-header">
-        <h2>EXPENSES & MESS REPORT</h2>
-        <p>Student: Ayan Karmakar | Generated via PocketLedger Pro</p>
-      </div>
-
       <div class="filter-grid">
         <div>
           <label>Filter by Date</label>
@@ -417,7 +405,7 @@
         <div id="weekDeleteContainer"></div>
         <div style="display:flex; gap:8px;">
           <button class="btn-wa" onclick="shareWeeklyReport()">📲 Share Summary</button>
-          <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+          <button class="btn-pdf" onclick="exportPDF()">🖨️ Export PDF</button>
         </div>
       </div>
     </div>
@@ -1016,6 +1004,67 @@
     const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(waUrl, '_blank');
     showToast("Summary copied & opening WhatsApp...");
+  }
+
+  // Native PDF Generator & Share
+  async function exportPDF() {
+    if (currentActiveRows.length === 0) {
+      return showToast("No records available to export", "error");
+    }
+
+    showToast("Generating PDF report...");
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.setTextColor(16, 185, 129);
+    doc.text("POCKETLEDGER PRO - EXPENSE REPORT", 14, 18);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Student: Ayan Karmakar | Generated: ${new Date().toLocaleDateString('en-IN')}`, 14, 25);
+
+    let grandTotal = 0;
+    const tableRows = currentActiveRows.map(r => {
+      grandTotal += r.total;
+      return [r.date, r.morning, r.noon, r.afternoon, r.night, r.other, `Rs. ${r.total}`];
+    });
+
+    tableRows.push(["", "", "", "", "", "TOTAL SPEND", `Rs. ${grandTotal}`]);
+
+    doc.autoTable({
+      startY: 32,
+      head: [['Date & Day', 'Morning', 'Noon', 'Afternoon', 'Night', 'Other', 'Total']],
+      body: tableRows,
+      theme: 'grid',
+      headStyles: { fillColor: [16, 185, 129], textColor: [5, 5, 7], fontStyle: 'bold' },
+      styles: { fontSize: 8, cellPadding: 3 },
+      didParseCell: function (data) {
+        if (data.row.index === tableRows.length - 1) {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fillColor = [240, 253, 244];
+        }
+      }
+    });
+
+    const fileName = `Expense_Report_${getLocalTodayISO()}.pdf`;
+    const pdfBlob = doc.output('blob');
+    const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      try {
+        await navigator.share({
+          files: [pdfFile],
+          title: 'Expense Report',
+          text: 'Weekly Mess & Expense Report'
+        });
+        return;
+      } catch (err) {
+        console.log("Share cancelled:", err);
+      }
+    }
+
+    doc.save(fileName);
   }
 </script>
 </body>
