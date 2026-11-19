@@ -5,198 +5,224 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>PocketLedger Pro</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --bg: #050507;
       --surface: #111216;
-      --surface-elevated: #181a20;
+      --surface-2: #181a20;
       --border: rgba(255, 255, 255, 0.08);
-      --border-focus: #10b981;
       --primary: #10b981;
       --primary-glow: rgba(16, 185, 129, 0.25);
-      --secondary: #f59e0b;
+      --amber: #f59e0b;
       --danger: #f43f5e;
-      --info: #38bdf8;
+      --cyan: #38bdf8;
       --purple: #a855f7;
       --text: #f4f4f5;
-      --text-dim: #8e929f;
+      --muted: #8e929f;
     }
 
     * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
       background: var(--bg);
-      background-image: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.09), transparent 45%);
+      background-image: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.1), transparent 45%);
       color: var(--text);
-      padding: 16px 14px 40px;
+      padding: 14px 14px 90px;
       min-height: 100vh;
     }
     .container { max-width: 820px; margin: 0 auto; }
 
-    /* Header */
-    .header {
+    /* Top App Bar */
+    .topbar {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 18px; background: var(--surface); border: 1px solid var(--border);
-      border-radius: 20px; margin-bottom: 16px;
+      padding: 12px 16px; background: rgba(17, 18, 22, 0.85);
+      backdrop-filter: blur(12px); border: 1px solid var(--border);
+      border-radius: 18px; margin-bottom: 16px; position: sticky; top: 10px; z-index: 50;
     }
     .brand { display: flex; align-items: center; gap: 10px; }
-    .brand-icon {
-      width: 38px; height: 38px; border-radius: 12px;
+    .logo-box {
+      width: 36px; height: 36px; border-radius: 11px;
       background: linear-gradient(135deg, #10b981, #059669);
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px; font-weight: 700; color: #050507;
-      box-shadow: 0 4px 15px var(--primary-glow);
+      font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: #050507;
+      box-shadow: 0 4px 14px var(--primary-glow);
     }
-    .brand-title { font-family: 'Space Grotesk', sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -0.4px; }
-    .brand-sub { font-size: 11px; color: var(--text-dim); }
-    .sync-pill {
+    .app-name { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+    .app-ver { font-size: 10px; color: var(--muted); cursor: pointer; }
+    .status-chip {
       display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;
-      padding: 6px 12px; border-radius: 99px; background: rgba(16, 185, 129, 0.12);
+      padding: 5px 11px; border-radius: 99px; background: rgba(16, 185, 129, 0.12);
       color: var(--primary); border: 1px solid rgba(16, 185, 129, 0.25);
     }
-    .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); animation: blink 1.8s infinite; }
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); animation: pulse 1.6s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-    /* Hero Summary Card */
-    .hero-card {
-      background: linear-gradient(145deg, #13161c, #0c0d11);
-      border: 1px solid var(--border); border-radius: 24px; padding: 20px;
-      margin-bottom: 16px; position: relative; overflow: hidden;
+    /* Tab Sections */
+    .tab-view { display: none; animation: fadeIn 0.25s ease; }
+    .tab-view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Hero Card */
+    .hero {
+      background: linear-gradient(145deg, #141820, #0c0d11);
+      border: 1px solid var(--border); border-radius: 22px; padding: 18px;
+      margin-bottom: 14px;
     }
-    .hero-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
-    .hero-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); font-weight: 600; }
-    .hero-amount { font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 700; color: #fff; margin-top: 2px; }
-    .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .mini-box {
+    .hero-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }
+    .lbl-sm { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); font-weight: 700; }
+    .big-num { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; color: #fff; margin-top: 2px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .kpi-box {
       background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border);
-      border-radius: 14px; padding: 10px 12px;
+      border-radius: 13px; padding: 10px;
     }
-    .mini-box span { display: block; font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 600; }
-    .mini-box strong { font-family: 'Space Grotesk', sans-serif; font-size: 16px; margin-top: 2px; display: block; }
+    .kpi-box span { display: block; font-size: 10px; color: var(--muted); font-weight: 600; }
+    .kpi-box strong { font-family: 'Space Grotesk', sans-serif; font-size: 14px; margin-top: 3px; display: block; }
 
-    /* Progress Split Bar */
-    .split-wrap { margin-top: 16px; }
-    .split-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
-    .split-bar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: #1e2028; gap: 2px; }
-    .split-seg { height: 100%; transition: width 0.35s ease; border-radius: 4px; }
-
-    /* Section Cards */
+    /* Cards & Forms */
     .card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 22px; padding: 18px; margin-bottom: 16px;
+      border-radius: 22px; padding: 18px; margin-bottom: 14px;
     }
-    .card-head {
+    .card-title {
       font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700;
-      margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;
     }
 
-    /* Inputs & Smart Form */
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .field { margin-bottom: 12px; }
-    label { display: block; font-size: 11px; font-weight: 600; color: var(--text-dim); margin-bottom: 5px; letter-spacing: 0.3px; }
+    /* Quick Preset Chips */
+    .presets { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; scrollbar-width: none; }
+    .presets::-webkit-scrollbar { display: none; }
+    .preset-chip {
+      background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+      padding: 6px 11px; border-radius: 99px; font-size: 11px; font-weight: 600;
+      white-space: nowrap; cursor: pointer; transition: 0.15s;
+    }
+    .preset-chip:active { background: var(--primary); color: #050507; border-color: var(--primary); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field { margin-bottom: 11px; }
+    label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
     input {
-      width: 100%; padding: 12px 14px; border-radius: 12px;
-      border: 1px solid var(--border); background: var(--surface-elevated);
+      width: 100%; padding: 12px 13px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--surface-2);
       color: var(--text); font-size: 14px; outline: none; transition: 0.2s;
     }
-    input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
     input::placeholder { color: #525663; }
 
     .other-row { display: flex; gap: 8px; margin-bottom: 8px; }
     .btn-ghost {
       background: rgba(255, 255, 255, 0.05); color: var(--text); border: 1px solid var(--border);
-      padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+      padding: 8px 13px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;
     }
     .btn-del-item {
       background: rgba(244, 63, 94, 0.15); color: var(--danger); border: 1px solid rgba(244, 63, 94, 0.3);
-      padding: 0 14px; border-radius: 12px; font-weight: 700; cursor: pointer;
+      padding: 0 13px; border-radius: 12px; font-weight: 700; cursor: pointer;
     }
 
-    /* Live Total & Submit */
     .submit-bar {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      display: flex; align-items: center; justify-content: space-between;
       margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
     }
-    .preview-box small { display: block; font-size: 11px; color: var(--text-dim); }
-    .preview-box span { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--primary); }
     .btn-primary {
       background: linear-gradient(135deg, #10b981, #059669); color: #050507;
       border: none; padding: 13px 22px; border-radius: 14px; font-size: 14px;
-      font-weight: 700; cursor: pointer; box-shadow: 0 4px 18px var(--primary-glow); transition: 0.2s;
+      font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px var(--primary-glow);
     }
-    .btn-primary:active { transform: scale(0.97); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Filters & Week Nav */
-    .filter-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 14px; }
-    .week-switcher {
+    /* Budget Progress */
+    .budget-bar-bg { height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin: 10px 0; }
+    .budget-bar-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.4s ease; border-radius: 99px; }
+
+    /* Chart Container */
+    .chart-box { position: relative; height: 220px; width: 100%; margin-top: 10px; }
+
+    /* Ledger & Filters */
+    .filter-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 12px; }
+    .week-nav {
       display: flex; justify-content: space-between; align-items: center;
-      background: var(--surface-elevated); padding: 8px 10px; border-radius: 14px;
-      border: 1px solid var(--border); margin-bottom: 14px;
+      background: var(--surface-2); padding: 8px 10px; border-radius: 14px;
+      border: 1px solid var(--border); margin-bottom: 12px;
     }
-    .week-btn {
+    .nav-pill {
       background: rgba(255, 255, 255, 0.06); color: var(--text); border: none;
-      padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+      padding: 7px 12px; border-radius: 9px; font-size: 12px; font-weight: 600; cursor: pointer;
     }
-    .back-now-btn {
-      background: rgba(245, 158, 11, 0.15); color: var(--secondary);
-      border: 1px solid rgba(245, 158, 11, 0.35); padding: 6px 12px; border-radius: 10px;
+    .back-pill {
+      background: rgba(245, 158, 11, 0.15); color: var(--amber);
+      border: 1px solid rgba(245, 158, 11, 0.35); padding: 5px 10px; border-radius: 9px;
       font-size: 11px; font-weight: 700; cursor: pointer;
     }
 
-    /* Table */
     .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
-    th { background: var(--surface-elevated); color: var(--text-dim); font-weight: 600; padding: 11px 10px; white-space: nowrap; }
+    th { background: var(--surface-2); color: var(--muted); font-weight: 600; padding: 11px 10px; white-space: nowrap; }
     td { padding: 11px 10px; border-top: 1px solid var(--border); white-space: nowrap; }
-    .date-pill { background: rgba(255,255,255,0.06); padding: 4px 8px; border-radius: 8px; font-weight: 600; font-size: 11px; }
-    .amt-pill {
+    .date-tag { background: rgba(255,255,255,0.06); padding: 4px 8px; border-radius: 7px; font-weight: 600; font-size: 11px; }
+    .amt-tag { background: rgba(16, 185, 129, 0.15); color: var(--primary); padding: 4px 8px; border-radius: 7px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; }
+    .act-btn { border: none; padding: 6px 8px; border-radius: 8px; font-size: 12px; cursor: pointer; margin-right: 3px; }
+
+    .action-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 8px; }
+    .btn-wa {
       background: rgba(16, 185, 129, 0.15); color: var(--primary);
-      padding: 4px 9px; border-radius: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+      border: 1px solid rgba(16, 185, 129, 0.3); padding: 9px 14px; border-radius: 11px; font-size: 12px; font-weight: 700; cursor: pointer;
     }
-    .icon-btn {
-      border: none; padding: 6px 9px; border-radius: 8px; font-size: 12px; cursor: pointer; margin-right: 4px;
+    .btn-pdf {
+      background: rgba(56, 189, 248, 0.15); color: var(--cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3); padding: 9px 14px; border-radius: 11px; font-size: 12px; font-weight: 700; cursor: pointer;
     }
-    .edit-ic { background: rgba(56, 189, 248, 0.15); color: var(--info); }
-    .del-ic { background: rgba(244, 63, 94, 0.15); color: var(--danger); }
-
-    /* Footer Actions */
-    .footer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 10px; }
-    .btn-danger-soft {
+    .btn-del-wk {
       background: rgba(244, 63, 94, 0.12); color: var(--danger);
-      border: 1px solid rgba(244, 63, 94, 0.25); padding: 9px 14px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer;
-    }
-    .btn-print {
-      background: rgba(56, 189, 248, 0.15); color: var(--info);
-      border: 1px solid rgba(56, 189, 248, 0.3); padding: 9px 16px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+      border: 1px solid rgba(244, 63, 94, 0.25); padding: 9px 12px; border-radius: 11px; font-size: 12px; font-weight: 600; cursor: pointer;
     }
 
-    /* Modal */
-    #editModal {
-      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(6px); z-index: 999; justify-content: center; align-items: center; padding: 16px;
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+      width: calc(100% - 28px); max-width: 460px;
+      background: rgba(24, 26, 32, 0.92); backdrop-filter: blur(16px);
+      border: 1px solid var(--border); border-radius: 20px;
+      display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75); z-index: 100;
+    }
+    .nav-tab {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 8px 4px; border-radius: 14px; color: var(--muted);
+      font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; border: none; background: transparent;
+    }
+    .nav-tab span.ic { font-size: 17px; margin-bottom: 2px; }
+    .nav-tab.active { background: rgba(16, 185, 129, 0.16); color: var(--primary); }
+
+    /* Modals */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 18px;
     }
     .modal-box {
       background: var(--surface); border: 1px solid var(--border); width: 100%;
-      max-width: 480px; border-radius: 22px; padding: 20px; max-height: 90vh; overflow-y: auto;
+      max-width: 440px; border-radius: 24px; padding: 22px; max-height: 90vh; overflow-y: auto;
+    }
+    .update-card { text-align: center; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .update-badge {
+      display: inline-block; background: rgba(16, 185, 129, 0.15); color: var(--primary);
+      padding: 5px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; margin-bottom: 12px;
     }
 
     /* Toast */
     #toast {
-      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
-      background: var(--primary); color: #050507; padding: 10px 20px; border-radius: 99px;
-      font-weight: 700; font-size: 13px; display: none; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      position: fixed; top: 72px; left: 50%; transform: translateX(-50%);
+      background: var(--primary); color: #050507; padding: 9px 18px; border-radius: 99px;
+      font-weight: 700; font-size: 12px; display: none; z-index: 10000; box-shadow: 0 10px 25px rgba(0,0,0,0.6);
     }
 
     @media (max-width: 600px) {
-      .grid-2, .filter-grid { grid-template-columns: 1fr; }
-      .mini-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-      .mini-box { padding: 8px 10px; }
-      .mini-box strong { font-size: 14px; }
+      .filter-grid { grid-template-columns: 1fr; }
     }
-
     @media print {
       body { background: #fff !important; color: #000 !important; padding: 0; }
-      #add-card, .filter-grid, .week-switcher, .hero-card, .footer-actions, th:last-child, td:last-child { display: none !important; }
+      .topbar, .bottom-nav, #tab-entry, #tab-analytics, .filter-grid, .week-nav, .action-row, th:last-child, td:last-child { display: none !important; }
+      #tab-ledger { display: block !important; }
       .card { border: none !important; background: transparent !important; padding: 0 !important; }
       th, td { border: 1px solid #000 !important; color: #000 !important; background: #fff !important; }
       .print-header { display: block !important; margin-bottom: 12px; }
@@ -207,172 +233,222 @@
 <body>
 
 <div class="container">
-  <!-- Top Header -->
-  <div class="header">
+  <!-- Sticky Top App Bar -->
+  <div class="topbar">
     <div class="brand">
-      <div class="brand-icon">₹</div>
+      <div class="logo-box">₹</div>
       <div>
-        <div class="brand-title">PocketLedger Pro</div>
-        <div class="brand-sub">Smart Mess & Expense Log</div>
+        <div class="app-name">PocketLedger Pro</div>
+        <div class="app-ver" id="appVerLabel" onclick="checkAppUpdate(true)">v1.0.4 • Tap to check updates</div>
       </div>
     </div>
-    <div class="sync-pill"><span class="pulse-dot"></span> Cloud Sync</div>
+    <div class="status-chip"><span class="dot"></span> Synced</div>
   </div>
 
-  <!-- Hero Dashboard Card -->
-  <div class="hero-card">
-    <div class="hero-top">
-      <div>
-        <div class="hero-label">Active Week Spend</div>
-        <div class="hero-amount" id="statTotal">₹0</div>
-      </div>
-      <div style="text-align:right;">
-        <div class="hero-label">Daily Avg</div>
-        <div style="font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700; color:var(--primary);" id="statAvg">₹0</div>
-      </div>
-    </div>
-
-    <div class="mini-stats">
-      <div class="mini-box">
-        <span>Active Days</span>
-        <strong id="statEntries" style="color:var(--secondary);">0 Days</strong>
-      </div>
-      <div class="mini-box">
-        <span>Peak Day</span>
-        <strong id="statMax" style="color:var(--danger);">₹0</strong>
-      </div>
-      <div class="mini-box">
-        <span>Top Meal</span>
-        <strong id="statTopCat" style="color:var(--info);">-</strong>
-      </div>
-    </div>
-
-    <div class="split-wrap">
-      <div class="split-labels">
-        <span>Category Breakdown</span>
-        <span>M • L • S • D • O</span>
-      </div>
-      <div class="split-bar">
-        <div id="barM" class="split-seg" style="background:#38bdf8; width:0%;"></div>
-        <div id="barL" class="split-seg" style="background:#10b981; width:0%;"></div>
-        <div id="barS" class="split-seg" style="background:#f59e0b; width:0%;"></div>
-        <div id="barD" class="split-seg" style="background:#a855f7; width:0%;"></div>
-        <div id="barO" class="split-seg" style="background:#f43f5e; width:0%;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Smart Entry Form -->
-  <div class="card" id="add-card">
-    <div class="card-head">
-      <span>⚡ Quick Expense Entry</span>
-      <span style="font-size:11px; color:var(--primary); font-weight:500;">Type number + Space for ( )</span>
-    </div>
-
-    <div class="field">
-      <label>Date</label>
-      <input type="date" id="entryDate">
-    </div>
-
-    <div class="grid-2">
-      <div class="field">
-        <label>Morning (Breakfast)</label>
-        <input type="text" class="smart-input" id="m_val" placeholder="e.g. 20 (Kachori)">
-      </div>
-      <div class="field">
-        <label>Noon (Lunch)</label>
-        <input type="text" class="smart-input" id="l_val" placeholder="e.g. 60 (Rice Fish)">
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="field">
-        <label>Afternoon (Snacks)</label>
-        <input type="text" class="smart-input" id="s_val" placeholder="e.g. 15 (Tea)">
-      </div>
-      <div class="field">
-        <label>Night (Dinner)</label>
-        <input type="text" class="smart-input" id="d_val" placeholder="e.g. 45 (Roti Tadka)">
-      </div>
-    </div>
-
-    <div class="field" style="margin-bottom:0;">
-      <label>Other Expenses</label>
-      <div id="othersContainer">
-        <div class="other-row">
-          <input type="text" class="other-item smart-input" placeholder="e.g. 20 (Pen)">
+  <!-- TAB 1: ENTRY & DASHBOARD -->
+  <div id="tab-entry" class="tab-view active">
+    <div class="hero">
+      <div class="hero-row">
+        <div>
+          <div class="lbl-sm">Active Week Spend</div>
+          <div class="big-num" id="statTotal">₹0</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="lbl-sm">Daily Avg</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700; color:var(--primary);" id="statAvg">₹0</div>
         </div>
       </div>
-      <button type="button" class="btn-ghost" onclick="addOtherInput('othersContainer')">+ Add Item</button>
+      <div class="kpi-grid">
+        <div class="kpi-box">
+          <span>Logged Days</span>
+          <strong id="statEntries" style="color:var(--amber);">0 Days</strong>
+        </div>
+        <div class="kpi-box">
+          <span>Highest Day</span>
+          <strong id="statMax" style="color:var(--danger);">₹0</strong>
+        </div>
+        <div class="kpi-box">
+          <span>Month Spend</span>
+          <strong id="statMonth" style="color:var(--cyan);">₹0</strong>
+        </div>
+      </div>
     </div>
 
-    <div class="submit-bar">
-      <div class="preview-box">
-        <small>Today's Entry Total</small>
-        <span id="liveTotal">₹0</span>
+    <div class="card">
+      <div class="card-title">
+        <span>⚡ Quick Expense Entry</span>
+        <span style="font-size:11px; color:var(--primary); font-weight:500;">Number + Space = ( )</span>
       </div>
-      <button id="saveBtn" class="btn-primary" onclick="submitExpense()">Save Entry →</button>
+
+      <!-- One-Tap Quick Presets -->
+      <div class="presets">
+        <button type="button" class="preset-chip" onclick="quickFill('m_val', '20 (Breakfast)')">+ ₹20 Breakfast</button>
+        <button type="button" class="preset-chip" onclick="quickFill('l_val', '60 (Mess Lunch)')">+ ₹60 Lunch</button>
+        <button type="button" class="preset-chip" onclick="quickFill('s_val', '15 (Tea & Snacks)')">+ ₹15 Snacks</button>
+        <button type="button" class="preset-chip" onclick="quickFill('d_val', '45 (Mess Dinner)')">+ ₹45 Dinner</button>
+      </div>
+
+      <div class="field">
+        <label>Date (Auto IST Sync)</label>
+        <input type="date" id="entryDate">
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>Morning</label>
+          <input type="text" class="smart-input" id="m_val" placeholder="e.g. 20 (Kachori)">
+        </div>
+        <div class="field">
+          <label>Noon</label>
+          <input type="text" class="smart-input" id="l_val" placeholder="e.g. 60 (Rice Fish)">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>Afternoon</label>
+          <input type="text" class="smart-input" id="s_val" placeholder="e.g. 15 (Tea)">
+        </div>
+        <div class="field">
+          <label>Night</label>
+          <input type="text" class="smart-input" id="d_val" placeholder="e.g. 45 (Roti Tadka)">
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:0;">
+        <label>Other Expenses</label>
+        <div id="othersContainer">
+          <div class="other-row">
+            <input type="text" class="other-item smart-input" placeholder="e.g. 20 (Pen)">
+          </div>
+        </div>
+        <button type="button" class="btn-ghost" onclick="addOtherInput('othersContainer')">+ Add More Item</button>
+      </div>
+
+      <div class="submit-bar">
+        <div>
+          <span class="lbl-sm">Entry Total</span>
+          <div id="liveTotal" style="font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:700; color:var(--primary);">₹0</div>
+        </div>
+        <button id="saveBtn" class="btn-primary" onclick="submitExpense()">Save Entry →</button>
+      </div>
     </div>
   </div>
 
-  <!-- Ledger & Report Section -->
-  <div class="card" id="report-section">
-    <div class="print-header">
-      <h2>EXPENSES & MESS REPORT</h2>
-      <p>Student: Ayan Karmakar | Generated via PocketLedger Pro</p>
-    </div>
-
-    <div class="filter-grid">
-      <div>
-        <label>Filter by Date</label>
-        <input type="date" id="searchDate" oninput="renderTable()">
+  <!-- TAB 2: ANALYTICS & BUDGET -->
+  <div id="tab-analytics" class="tab-view">
+    <div class="card">
+      <div class="card-title">
+        <span>🎯 Monthly Budget Planner</span>
+        <button class="btn-ghost" style="padding:5px 10px; font-size:11px;" onclick="setMonthlyBudget()">Set Limit</button>
       </div>
-      <div>
-        <label>Search Item</label>
-        <input type="text" id="searchText" placeholder="Rice, Tea, Pen..." oninput="renderTable()">
+      <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600;">
+        <span id="budgetSpentLbl">Spent: ₹0</span>
+        <span id="budgetLimitLbl" style="color:var(--muted);">Limit: ₹4,000</span>
       </div>
-      <div>
-        <button class="btn-ghost" style="padding:12px 14px;" onclick="clearFilters()">Reset</button>
+      <div class="budget-bar-bg">
+        <div class="budget-bar-fill" id="budgetBarFill"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:6px;">
+        <span id="budgetRemLbl">Remaining: ₹4,000</span>
+        <span id="safeDailyLbl" style="color:var(--primary); font-weight:700;">Safe Daily: ₹133/day</span>
       </div>
     </div>
 
-    <div class="week-switcher">
-      <button class="week-btn" onclick="prevWeek()">← Prev</button>
-      <div id="centerWeekBtn" style="text-align:center;"></div>
-      <button class="week-btn" onclick="nextWeek()">Next →</button>
+    <div class="card">
+      <div class="card-title">📊 Active Week Category Split</div>
+      <div class="chart-box">
+        <canvas id="catChart"></canvas>
+      </div>
     </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date & Day</th>
-            <th>Morning</th>
-            <th>Noon</th>
-            <th>Afternoon</th>
-            <th>Night</th>
-            <th>Other</th>
-            <th>Total</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-dim);">Syncing cloud records...</td></tr>
-        </tbody>
-      </table>
+    <div class="card">
+      <div class="card-title">📈 Daily Spend Trend (Active Week)</div>
+      <div class="chart-box">
+        <canvas id="trendChart"></canvas>
+      </div>
     </div>
+  </div>
 
-    <div class="footer-actions">
-      <div id="weekDeleteContainer"></div>
-      <button class="btn-print" onclick="window.print()">🖨️ Export PDF</button>
+  <!-- TAB 3: FULL LEDGER & REPORTS -->
+  <div id="tab-ledger" class="tab-view">
+    <div class="card">
+      <div class="print-header">
+        <h2>EXPENSES & MESS REPORT</h2>
+        <p>Student: Ayan Karmakar | Generated via PocketLedger Pro</p>
+      </div>
+
+      <div class="filter-grid">
+        <div>
+          <label>Filter by Date</label>
+          <input type="date" id="searchDate" oninput="renderTable()">
+        </div>
+        <div>
+          <label>Search Item</label>
+          <input type="text" id="searchText" placeholder="Rice, Tea, Pen..." oninput="renderTable()">
+        </div>
+        <div>
+          <button class="btn-ghost" style="padding:12px 14px;" onclick="clearFilters()">Reset</button>
+        </div>
+      </div>
+
+      <div class="week-nav">
+        <button class="nav-pill" onclick="prevWeek()">← Prev</button>
+        <div id="centerWeekBtn" style="text-align:center;"></div>
+        <button class="nav-pill" onclick="nextWeek()">Next →</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date & Day</th>
+              <th>Morning</th>
+              <th>Noon</th>
+              <th>Afternoon</th>
+              <th>Night</th>
+              <th>Other</th>
+              <th>Total</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="8" style="text-align:center; padding:20px; color:var(--muted);">Loading records...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="action-row">
+        <div id="weekDeleteContainer"></div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-wa" onclick="shareWeeklyReport()">📲 Share Summary</button>
+          <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
+<!-- Bottom Navigation Bar -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" onclick="switchTab('entry', this)">
+    <span class="ic">⚡</span>
+    <span>Entry</span>
+  </button>
+  <button class="nav-tab" onclick="switchTab('analytics', this)">
+    <span class="ic">📊</span>
+    <span>Analytics</span>
+  </button>
+  <button class="nav-tab" onclick="switchTab('ledger', this)">
+    <span class="ic">📒</span>
+    <span>Ledger</span>
+  </button>
+</nav>
+
 <!-- Edit Modal -->
-<div id="editModal">
+<div id="editModal" class="modal-overlay">
   <div class="modal-box">
-    <div class="card-head" style="color:var(--primary);">✏️ Edit Record</div>
+    <div class="card-title" style="color:var(--primary);">✏️ Edit Expense Record</div>
     <input type="hidden" id="editRowId">
     
     <div class="field">
@@ -412,20 +488,120 @@
   </div>
 </div>
 
+<!-- Force Update Modal -->
+<div id="updateModal" class="modal-overlay">
+  <div class="modal-box update-card">
+    <div class="update-badge" id="newVerBadge">🚀 NEW UPDATE AVAILABLE</div>
+    <div style="font-family:'Space Grotesk',sans-serif; font-size:21px; font-weight:700; margin-bottom:8px;">Update Required</div>
+    <div style="font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:20px;">
+      A new version of PocketLedger Pro is live on GitHub with UI upgrades and bug fixes. Please update to continue.
+    </div>
+    <div class="grid-2">
+      <button type="button" style="background:rgba(244,63,94,0.15); color:var(--danger); border:1px solid rgba(244,63,94,0.3); padding:13px; border-radius:14px; font-weight:700; cursor:pointer;" onclick="exitApp()">Close App</button>
+      <button type="button" class="btn-primary" id="updateNowBtn">Update Now</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbwxfQogJpmahrxUW8ejS9SgWtfsZ3jqUutC37CgqCVQw4zuIE8GZ8Nn2QAq6IHWCQu_/exec";
-  
+  const CURRENT_APP_VERSION = "v1.0.4";
+  const GITHUB_REPO = "ghostbyteprotocol/PocketLedger-Pro";
+
   let rawData = [];
+  let currentActiveRows = [];
   let weekOffset = 0;
+  let lastSyncedDateStr = "";
+  let catChartInstance = null;
+  let trendChartInstance = null;
   const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+  function switchTab(tabName, el) {
+    document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    el.classList.add('active');
+    if (tabName === 'analytics') renderCharts();
+  }
+
+  function quickFill(inputId, text) {
+    const inp = document.getElementById(inputId);
+    inp.value = text;
+    calcPreview();
+    showToast(`Added ${text}`);
+  }
+
+  function getLocalTodayISO() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function syncDateIfNeeded(force = false) {
+    const currentLocalDate = getLocalTodayISO();
+    const dateInput = document.getElementById('entryDate');
+    if (force || !dateInput.value || dateInput.value === lastSyncedDateStr) {
+      dateInput.value = currentLocalDate;
+    }
+    lastSyncedDateStr = currentLocalDate;
+  }
+
+  async function checkAppUpdate(manual = false) {
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest?t=${Date.now()}`);
+      if (!res.ok) {
+        if (manual) showToast("You are on the latest version!");
+        return;
+      }
+      const data = await res.json();
+      const latestTag = data.tag_name;
+
+      if (latestTag && latestTag !== CURRENT_APP_VERSION) {
+        document.getElementById('newVerBadge').innerText = `🚀 UPDATE ${latestTag} AVAILABLE`;
+        const apkAsset = data.assets && data.assets.find(a => a.name.endsWith('.apk'));
+        const redirectUrl = apkAsset ? apkAsset.browser_download_url : data.html_url;
+
+        document.getElementById('updateNowBtn').onclick = () => {
+          window.open(redirectUrl, '_system') || (window.location.href = redirectUrl);
+        };
+        document.getElementById('updateModal').style.display = 'flex';
+      } else if (manual) {
+        showToast("App is up to date!");
+      }
+    } catch (e) {
+      if (manual) showToast("Unable to check updates offline", "error");
+    }
+  }
+
+  function exitApp() {
+    if (navigator.app && navigator.app.exitApp) {
+      navigator.app.exitApp();
+    } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+      window.Capacitor.Plugins.App.exitApp();
+    } else {
+      window.close();
+      document.body.innerHTML = '<div style="display:flex;height:100vh;align-items:center;justify-content:center;color:#f43f5e;font-family:sans-serif;font-weight:700;">App Closed.</div>';
+    }
+  }
+
   window.onload = () => {
-    const today = new Date();
-    document.getElementById('entryDate').value = today.toISOString().split('T')[0];
+    document.getElementById('appVerLabel').innerText = `${CURRENT_APP_VERSION} • Tap to check updates`;
+    syncDateIfNeeded(true);
     document.querySelectorAll('.smart-input').forEach(attachSmartListener);
     fetchData();
+    checkAppUpdate(false);
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        syncDateIfNeeded(false);
+        renderTable();
+      }
+    });
+    setInterval(() => syncDateIfNeeded(false), 60000);
   };
 
   function showToast(msg, type = 'success') {
@@ -434,7 +610,7 @@
     t.style.background = type === 'error' ? '#f43f5e' : '#10b981';
     t.style.color = type === 'error' ? '#fff' : '#050507';
     t.style.display = 'block';
-    setTimeout(() => { t.style.display = 'none'; }, 3000);
+    setTimeout(() => { t.style.display = 'none'; }, 2800);
   }
 
   function extractAmount(str) {
@@ -444,7 +620,6 @@
     return matches.reduce((sum, num) => sum + parseFloat(num), 0);
   }
 
-  // নাম্বার লিখে স্পেস দিলেই অটোমেটিক () আসবে এবং কার্সার মাঝখানে থাকবে
   function attachSmartListener(input) {
     input.addEventListener('input', function(e) {
       const val = this.value;
@@ -519,14 +694,14 @@
       rawData = await res.json();
       renderTable();
     } catch (err) {
-      showToast('ডেটা লোড করতে সমস্যা হয়েছে!', 'error');
+      showToast('Failed to sync cloud data', 'error');
     }
   }
 
   async function submitExpense() {
     const btn = document.getElementById('saveBtn');
     const isoDate = document.getElementById('entryDate').value;
-    if (!isoDate) return showToast('তারিখ সিলেক্ট কর!', 'error');
+    if (!isoDate) return showToast('Please select a date', 'error');
 
     const dateFormatted = formatDateWithDay(isoDate);
     const m = document.getElementById('m_val').value.trim();
@@ -537,7 +712,7 @@
 
     const total = extractAmount(m) + extractAmount(l) + extractAmount(s) + extractAmount(d) + otherData.total;
     if (total === 0 && !m && !l && !s && !d && !otherData.text) {
-      return showToast('কমপক্ষে একটা খরচ লেখ!', 'error');
+      return showToast('Enter at least one expense item', 'error');
     }
 
     btn.innerText = 'Saving...';
@@ -559,13 +734,13 @@
         document.getElementById('othersContainer').innerHTML = '<div class="other-row"><input type="text" class="other-item smart-input" placeholder="e.g. 20 (Pen)"></div>';
         attachSmartListener(document.querySelector('.other-item'));
         document.getElementById('liveTotal').innerText = '₹0';
-        showToast('✅ সফলভাবে সেভ হয়েছে!');
+        showToast('Entry saved to cloud!');
         fetchData();
       } else {
         throw new Error(result.message);
       }
     } catch (err) {
-      showToast('সেভ হতে সমস্যা: ' + err.message, 'error');
+      showToast('Save failed: ' + err.message, 'error');
     } finally {
       btn.innerText = 'Save Entry →';
       btn.disabled = false;
@@ -590,7 +765,6 @@
     } else {
       addOtherInput('editOthersContainer');
     }
-
     document.getElementById('editModal').style.display = 'flex';
   }
 
@@ -622,13 +796,13 @@
       const result = await res.json();
       if (result.status === 'success') {
         closeModal();
-        showToast('✅ এন্ট্রি আপডেট হয়েছে!');
+        showToast('Record updated!');
         fetchData();
       } else {
         throw new Error(result.message);
       }
     } catch (err) {
-      showToast('আপডেট ব্যর্থ: ' + err.message, 'error');
+      showToast('Update failed: ' + err.message, 'error');
     } finally {
       btn.innerText = 'Update';
       btn.disabled = false;
@@ -636,7 +810,7 @@
   }
 
   async function deleteSingleRow(rowId) {
-    if (!confirm('এই দিনের এন্ট্রি নিশ্চিত ডিলিট করতে চাস?')) return;
+    if (!confirm('Delete this expense record permanently?')) return;
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -644,16 +818,16 @@
       });
       const result = await res.json();
       if (result.status === 'success') {
-        showToast('🗑️ ডিলিট করা হয়েছে!');
+        showToast('Record deleted');
         fetchData();
       }
     } catch (err) {
-      showToast('Error: ' + err.message, 'error');
+      showToast('Delete error: ' + err.message, 'error');
     }
   }
 
   async function deleteCurrentWeek(rowIds) {
-    if (!confirm('এই পুরো সপ্তাহের সব রেকর্ড মুছে ফেলবি?')) return;
+    if (!confirm('Delete all records for this active week?')) return;
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -661,7 +835,7 @@
       });
       const result = await res.json();
       if (result.status === 'success') {
-        showToast('🗑️ পুরো সপ্তাহ ডিলিট হয়েছে!');
+        showToast('Week records deleted');
         fetchData();
       }
     } catch (err) {
@@ -723,15 +897,15 @@
           r.other.toLowerCase().includes(sText)
         );
       }
-      centerBtn.innerHTML = `<span style="font-size:12px; color:var(--secondary); font-weight:700;">Results (${filtered.length})</span>`;
+      centerBtn.innerHTML = `<span style="font-size:12px; color:var(--amber); font-weight:700;">Results (${filtered.length})</span>`;
       displayRows = filtered;
     } else {
       const range = getCalendarWeekRange(weekOffset);
       const rangeText = `${formatDateShort(range.start)} - ${formatDateShort(range.end)}`;
       if (weekOffset === 0) {
-        centerBtn.innerHTML = `<strong style="font-size:12px; color:var(--primary);">Current Week</strong><br><small style="color:var(--text-dim); font-size:10px;">${rangeText}</small>`;
+        centerBtn.innerHTML = `<strong style="font-size:12px; color:var(--primary);">Current Week</strong><br><small style="color:var(--muted); font-size:10px;">${rangeText}</small>`;
       } else {
-        centerBtn.innerHTML = `<button class="back-now-btn" onclick="resetToCurrentWeek()">Current Week (${rangeText})</button>`;
+        centerBtn.innerHTML = `<button class="back-pill" onclick="resetToCurrentWeek()">Current Week (${rangeText})</button>`;
       }
 
       displayRows = rawData.filter(r => {
@@ -741,81 +915,169 @@
     }
 
     displayRows.sort((a, b) => parseEntryDate(a.date) - parseEntryDate(b.date));
+    currentActiveRows = displayRows;
+
+    // Calculate Current Month Spend
+    const now = new Date();
+    const monthTotal = rawData.reduce((acc, r) => {
+      const d = parseEntryDate(r.date);
+      return (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) ? acc + r.total : acc;
+    }, 0);
+    document.getElementById('statMonth').innerText = `₹${monthTotal}`;
+    updateBudgetUI(monthTotal);
 
     if (displayRows.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:18px; color:var(--text-dim);">এই সময়ে কোনো রেকর্ড নেই!</td></tr>`;
-      updateStats(0, 0, 0, 0, 0, 0, 0, 0);
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:18px; color:var(--muted);">No expense records found for this period.</td></tr>`;
+      updateStats(0, 0, 0);
       weekDelCont.innerHTML = '';
       return;
     }
 
     let viewTotal = 0, maxExpense = 0;
-    let sumM = 0, sumL = 0, sumS = 0, sumD = 0, sumO = 0;
     let currentRowIds = [];
 
     displayRows.forEach(r => {
       currentRowIds.push(r.rowId);
-      const valM = extractAmount(r.morning);
-      const valL = extractAmount(r.noon);
-      const valS = extractAmount(r.afternoon);
-      const valD = extractAmount(r.night);
-      const valO = extractAmount(r.other);
-
-      sumM += valM; sumL += valL; sumS += valS; sumD += valD; sumO += valO;
       viewTotal += r.total;
       if (r.total > maxExpense) maxExpense = r.total;
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><span class="date-pill">${r.date}</span></td>
+        <td><span class="date-tag">${r.date}</span></td>
         <td>${r.morning}</td>
         <td>${r.noon}</td>
         <td>${r.afternoon}</td>
         <td>${r.night}</td>
         <td>${r.other}</td>
-        <td><span class="amt-pill">₹${r.total}</span></td>
+        <td><span class="amt-tag">₹${r.total}</span></td>
         <td>
-          <button class="icon-btn edit-ic" onclick="openEdit(${r.rowId})">✏️</button>
-          <button class="icon-btn del-ic" onclick="deleteSingleRow(${r.rowId})">🗑️</button>
+          <button class="act-btn" style="background:rgba(56,189,248,0.15); color:var(--cyan);" onclick="openEdit(${r.rowId})">✏️</button>
+          <button class="act-btn" style="background:rgba(244,63,94,0.15); color:var(--danger);" onclick="deleteSingleRow(${r.rowId})">🗑️</button>
         </td>
       `;
       tbody.appendChild(tr);
     });
 
     if (displayRows.length > 0 && !isSearchActive) {
-      weekDelCont.innerHTML = `<button class="btn-danger-soft" onclick='deleteCurrentWeek(${JSON.stringify(currentRowIds)})'>🗑️ Delete Week</button>`;
+      weekDelCont.innerHTML = `<button class="btn-del-wk" onclick='deleteCurrentWeek(${JSON.stringify(currentRowIds)})'>🗑️ Delete Week</button>`;
     } else {
       weekDelCont.innerHTML = '';
     }
 
-    updateStats(viewTotal, displayRows.length, maxExpense, sumM, sumL, sumS, sumD, sumO);
+    updateStats(viewTotal, displayRows.length, maxExpense);
+    if (document.getElementById('tab-analytics').classList.contains('active')) renderCharts();
   }
 
-  function updateStats(total, count, max, m, l, s, d, o) {
+  function updateStats(total, count, max) {
     document.getElementById('statTotal').innerText = `₹${total}`;
     document.getElementById('statAvg').innerText = count > 0 ? `₹${Math.round(total / count)}` : '₹0';
     document.getElementById('statEntries').innerText = `${count} Days`;
     document.getElementById('statMax').innerText = `₹${max}`;
+  }
 
-    const cats = [
-      { name: 'Morning', val: m },
-      { name: 'Lunch', val: l },
-      { name: 'Snacks', val: s },
-      { name: 'Dinner', val: d },
-      { name: 'Other', val: o }
-    ].sort((a, b) => b.val - a.val);
-
-    document.getElementById('statTopCat').innerText = cats[0].val > 0 ? cats[0].name : '-';
-
-    if (total > 0) {
-      document.getElementById('barM').style.width = `${(m / total) * 100}%`;
-      document.getElementById('barL').style.width = `${(l / total) * 100}%`;
-      document.getElementById('barS').style.width = `${(s / total) * 100}%`;
-      document.getElementById('barD').style.width = `${(d / total) * 100}%`;
-      document.getElementById('barO').style.width = `${(o / total) * 100}%`;
-    } else {
-      ['barM', 'barL', 'barS', 'barD', 'barO'].forEach(id => document.getElementById(id).style.width = '0%');
+  // Monthly Budget Logic
+  function setMonthlyBudget() {
+    const current = localStorage.getItem('pl_monthly_budget') || 4000;
+    const val = prompt("Enter Monthly Budget Limit (₹):", current);
+    if (val && !isNaN(val) && Number(val) > 0) {
+      localStorage.setItem('pl_monthly_budget', Number(val));
+      renderTable();
+      showToast(`Monthly budget set to ₹${val}`);
     }
+  }
+
+  function updateBudgetUI(monthSpent) {
+    const limit = Number(localStorage.getItem('pl_monthly_budget')) || 4000;
+    const pct = Math.min((monthSpent / limit) * 100, 100);
+    const rem = Math.max(limit - monthSpent, 0);
+
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const daysLeft = Math.max(daysInMonth - now.getDate() + 1, 1);
+    const safeDaily = Math.round(rem / daysLeft);
+
+    const bar = document.getElementById('budgetBarFill');
+    bar.style.width = `${pct}%`;
+    bar.style.background = pct > 90 ? 'var(--danger)' : (pct > 70 ? 'var(--amber)' : 'var(--primary)');
+
+    document.getElementById('budgetSpentLbl').innerText = `Spent: ₹${monthSpent}`;
+    document.getElementById('budgetLimitLbl').innerText = `Limit: ₹${limit}`;
+    document.getElementById('budgetRemLbl').innerText = `Remaining: ₹${rem}`;
+    document.getElementById('safeDailyLbl').innerText = `Safe Daily: ₹${safeDaily}/day`;
+  }
+
+  // Interactive Charts
+  function renderCharts() {
+    let m = 0, l = 0, s = 0, d = 0, o = 0;
+    const labels = [];
+    const totals = [];
+
+    currentActiveRows.forEach(r => {
+      m += extractAmount(r.morning);
+      l += extractAmount(r.noon);
+      s += extractAmount(r.afternoon);
+      d += extractAmount(r.night);
+      o += extractAmount(r.other);
+      labels.push(r.date.split(' ')[0].slice(0, 5));
+      totals.push(r.total);
+    });
+
+    if (catChartInstance) catChartInstance.destroy();
+    catChartInstance = new Chart(document.getElementById('catChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Morning', 'Lunch', 'Snacks', 'Dinner', 'Other'],
+        datasets: [{
+          data: [m, l, s, d, o],
+          backgroundColor: ['#38bdf8', '#10b981', '#f59e0b', '#a855f7', '#f43f5e'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'right', labels: { color: '#f4f4f5', font: { size: 11 } } } }
+      }
+    });
+
+    if (trendChartInstance) trendChartInstance.destroy();
+    trendChartInstance = new Chart(document.getElementById('trendChart'), {
+      type: 'bar',
+      data: {
+        labels: labels.length ? labels : ['No Data'],
+        datasets: [{
+          label: 'Daily Spend (₹)',
+          data: totals.length ? totals : [0],
+          backgroundColor: '#10b981',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: '#8e929f', font: { size: 10 } }, grid: { display: false } },
+          y: { ticks: { color: '#8e929f', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  // WhatsApp / Text Summary Share
+  function shareWeeklyReport() {
+    if (currentActiveRows.length === 0) return showToast("No records in active week to share", "error");
+    let total = 0;
+    let lines = ["*📊 PocketLedger Pro - Weekly Expense Summary*", ""];
+    currentActiveRows.forEach(r => {
+      total += r.total;
+      lines.push(`• ${r.date}: *₹${r.total}*`);
+    });
+    lines.push("", `*Total Spend: ₹${total}*`);
+    const text = lines.join("\n");
+
+    if (navigator.clipboard) navigator.clipboard.writeText(text);
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, '_blank');
+    showToast("Summary copied & opening WhatsApp...");
   }
 </script>
 </body>
